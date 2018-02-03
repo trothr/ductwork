@@ -8,6 +8,7 @@ which must be included in a basic implementation.
 * console
 
 The 'console' stage is so named for compatibility with CMS/TSO Pipelines.
+In Ductwork, 'console' serves as a gateway between shell pipes and Ductwork stages.
 
 When 'console' is the first stage of a pipeline, it reads lines of text from file descriptor zero (0)
 delimited by newline characters. In this mode, its output must be connected
