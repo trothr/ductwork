@@ -1,4 +1,4 @@
-# Ductwork Specifications
+# Ductwork Specification
 
 This document outlines the design specification of
 the DUCTWORK project and enumerates the essential features.
