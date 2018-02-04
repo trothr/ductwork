@@ -33,7 +33,10 @@ Use the 'hole' stage to safely consume all records form preceeding stages.
 Use the `buffer` stage to hold all input records
 until the source stage terminates.
 
+* append
 
+Use the `append` stage to copy all input records to its output
+and then convey the output of the appended stage.
 
 
 
