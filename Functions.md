@@ -31,6 +31,19 @@ Use the `output()` function to write a record.
 
 The pipe descriptor struct `pd` must be an output connector.
 
+* streamstate
+
+Use the `streamstage()` function to interrogate the stage of a stream.
+
+    rc = streamstate(&pd);
+
+* sever
+
+Use the `sever()` function to disconnect a stream.
+
+    rc = sever(&pd);
+
+
 
 * addpipe
 
@@ -39,6 +52,7 @@ The pipe descriptor struct `pd` must be an output connector.
 * callpipe
 
 * runpipe
+
 
 
 
