@@ -6,14 +6,36 @@ as CMS Pipelines provides on IBM mainframe systems CMS and TSO.
 
 ## ductwork
 
-Too many things refer to pipelines, so "ductwork" is hoped to convey
+Ductwork is a CMS Pipelines work-alike for POSIX systems
+providing the same basic functionality as that of of CMS/TSO Pipelines
+but in a POSIX environment where IBM VM/CMS and IBM MVS/TSO are not available.
+
+Ductwork is compatible with CMS Pipelines at the command-line level
+as much as is possible.  Dispatching is handled by the underlying
+operating system (Unix, Linux, Windows, or even OpenVM).
+Ductwork accepts traditional Unix style options
+but also accepts traditional CMS and MVS style options.
+
+Too many technologies, services, systems, environments, projects, and libraries
+refer to "pipelines", so we use the name "ductwork" in hopes of conveying
 the same idea. If that doesn't work, maybe we'll call this thing "plenum".
 
+This document does not explain CMS Pipelines at all.  For general
+information about CMS Pipelines, see the web page
 
 
 
 ## links
 
 https://en.wikipedia.org/wiki/CMS_Pipelines
+
+http://vm.marist.edu/~pipeline/
+
+http://code.google.com/p/ductwork/
+
+
+
+
+
 
 
