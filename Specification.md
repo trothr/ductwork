@@ -11,8 +11,14 @@ a subset of the capability and syntax of that implementation.
 
 Syntaxtically, a Ductwork pipeline looks like a shell pipeline.
 
+Features of the Ductwork project:
+
+* bounded messages
+
 Conceptually, records in a Ductwork pipeline are similar to lines of text
-in a plaintext file or stream, such as program source.
+in a plaintext file or stream, such as program source. But records are
+delimited out of band so they can contain anything. (Embedded newline characters
+do not affect the structure.)
 
 * independent stages
 
@@ -39,7 +45,6 @@ a stage with this characteristic is said to "not delay the record".
 To delay the record (or not) has a significant effect on traffic flow.
 
 
-
 ## Differences from CMS/TSO Pipelines
 
 Ductwork uses the operating system kernel for scheduling.
@@ -51,16 +56,10 @@ CMS/TSO Pipelines concepts such as commit levels are not supported in Ductwork.
 ## Differences from Shell Pipes
 
 
-
 ## Differences from Named Pipes
 
 
 ## Differences from Named Sockets
-
-
-
-
-
 
 
 ## Differences from TCP Sockets
@@ -68,8 +67,6 @@ CMS/TSO Pipelines concepts such as commit levels are not supported in Ductwork.
 TCP sockets explicitly do not guarantee message boundaries.
 Bytes (octets) are assured to arrive in order, but traffic may be
 quantized arbitrarily from source endpoint to target endpoint.
-
-
 
 
 
