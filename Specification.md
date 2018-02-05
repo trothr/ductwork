@@ -64,18 +64,25 @@ It's possible to construct multi-stream pipelines in a shell,
 but the syntax is difficult.
 
 Writes do not block.
+While a non-blocking write sounds convenient, it negates flow control.
 
 
 ## Differences from Named Pipes
 
 Named pipes make multi-stream pipelines easier to describe in shell speak.
 
-Writes do not block.
+A read is not guaranteed to return only one chunk at a time.
+
+Also, writes do not block and there is no traffic flow.
 
 
 ## Differences from Named Sockets
 
-Writes do not block.
+Named sockets, being local, allow delivery of the entire message immediately.
+
+It's not clear that reads are quantized.
+
+Writes do not block, no traffic flow.
 
 
 ## Differences from TCP Sockets
