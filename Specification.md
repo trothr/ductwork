@@ -9,16 +9,16 @@ Ductwork is a pipeline environment supporting "flow programming".
 It is inspired by CMS/TSO Pipelines and is intended to support
 a subset of the capability and syntax of that implementation.
 
-Syntaxtically, a Ductwork pipeline looks like a shell pipeline.
+Syntactically, a basic Ductwork pipeline looks like a shell pipeline.
 
 Features of the Ductwork project:
 
-* bounded messages
+* out-of-band bounding
 
-Conceptually, records in a Ductwork pipeline are similar to lines of text
-in a plaintext file or stream, such as program source. But records are
-delimited out of band so they can contain anything. (Embedded newline characters
-do not affect the structure.)
+Conceptually, records (or "packets" or "messages") in a Ductwork pipeline are similar to
+lines of text in a plaintext file or stream, such as program source. But records are
+delimited out of band so they can contain anything. (Embedded newline characters,
+or any characters includine NULL, do not affect the structure.)
 
 * independent stages
 
@@ -44,6 +44,11 @@ downstream before actually consuming the input record. In CMS/TSO Pipelines
 a stage with this characteristic is said to "not delay the record".
 To delay the record (or not) has a significant effect on traffic flow.
 
+* labeled streams
+
+The parser easily assembles multi-stream pipelines using labels.
+This makes for a superset of shell pipeline syntax.
+
 
 ## Differences from CMS/TSO Pipelines
 
@@ -55,11 +60,22 @@ CMS/TSO Pipelines concepts such as commit levels are not supported in Ductwork.
 
 ## Differences from Shell Pipes
 
+It's possible to construct multi-stream pipelines in a shell,
+but the syntax is difficult.
+
+Writes do not block.
+
 
 ## Differences from Named Pipes
 
+Named pipes make multi-stream pipelines easier to describe in shell speak.
+
+Writes do not block.
+
 
 ## Differences from Named Sockets
+
+Writes do not block.
 
 
 ## Differences from TCP Sockets
@@ -68,7 +84,7 @@ TCP sockets explicitly do not guarantee message boundaries.
 Bytes (octets) are assured to arrive in order, but traffic may be
 quantized arbitrarily from source endpoint to target endpoint.
 
-
+Writes do not block.
 
 
 
