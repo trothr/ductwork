@@ -38,4 +38,22 @@ http://code.google.com/p/ductwork/
 
 
 
+## contributing
+
+Here’s how we suggest you go about proposing a change to this project:
+
+1.Fork this project to your account.
+1.Create a branch for the change you intend to make.
+1.Make your changes to your fork.
+1.Send a pull request from your fork’s branch to our master branch.
+
+Using the web-based interface to make changes is fine too, and will help you by automatically forking the project and prompting to send a pull request too.
+
+
+
+
+
+
+
+
 
