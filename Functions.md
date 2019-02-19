@@ -33,7 +33,7 @@ The pipe descriptor struct `pd` must be an output connector.
 
 * streamstate
 
-Use the `streamstage()` function to interrogate the stage of a stream.
+Use the `streamstate()` function to interrogate the state of a stream.
 
     rc = streamstate(&pd);
 
