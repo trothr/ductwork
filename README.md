@@ -4,6 +4,16 @@ a utility for flow-based programming
 Ductwork aims to provide on POSIX systems the same functionality
 as CMS Pipelines provides on IBM mainframe systems CMS and TSO.
 
+## goals
+
+Goals of the Ductwork project:
+
+* simulate CMS/TSO Pipelines for POSIX environments
+* allow stages to run independently
+* impose minimal infrastructure and environmental requirements
+* provide as many pre-defined stages as practical
+* allow custom stages in any language
+
 ## ductwork
 
 Ductwork is a CMS Pipelines work-alike for POSIX systems
