@@ -1,4 +1,5 @@
 # ductwork
+
 a utility for flow-based programming
 
 Ductwork aims to provide on POSIX systems the same functionality
@@ -34,7 +35,6 @@ This document does not explain CMS Pipelines at all.  For general
 information about CMS Pipelines, see the web page
 
 
-
 ## links
 
 https://en.wikipedia.org/wiki/CMS_Pipelines
@@ -57,13 +57,8 @@ Here’s how we suggest you go about proposing a change to this project:
 1. Make your changes to your fork.
 1. Send a pull request from your fork’s branch to our master branch.
 
-Using the web-based interface to make changes is fine too, and will help you by automatically forking the project and prompting to send a pull request too.
-
-
-
-
-
-
-
+Using the web-based interface to make changes is fine too,
+and will help you by automatically forking the project
+and prompting to send a pull request too.
 
 
