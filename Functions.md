@@ -2,7 +2,7 @@
 
 This page lists core functions of the DUCTWORK library.
 
-## Ductwork FUnctions
+## Ductwork Functions
 
 The following functions are available for 
 
@@ -42,8 +42,6 @@ Use the `streamstate()` function to interrogate the state of a stream.
 Use the `sever()` function to disconnect a stream.
 
     rc = sever(&pd);
-
-
 
 * addpipe
 

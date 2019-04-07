@@ -26,7 +26,7 @@ Pipelines are composed of independent programs called stages.
 Traffic flows through the pipeline moving from the output of one stage
 to the input of another stage.
 
-* packetized blow (bounded messages, record-oriented)
+* packetized flow (bounded messages, record-oriented)
 
 Records (or packets, or messages) flow through the pipeline
 as whole entities. A record may correspond to a line of text
@@ -49,7 +49,6 @@ To delay the record (or not) has a significant effect on traffic flow.
 The parser easily assembles multi-stream pipelines using labels.
 This makes for a superset of shell pipeline syntax.
 
-
 ## Differences from CMS/TSO Pipelines
 
 Ductwork uses the operating system kernel for scheduling.
@@ -66,7 +65,6 @@ but the syntax is difficult.
 Writes do not block.
 While a non-blocking write sounds convenient, it negates flow control.
 
-
 ## Differences from Named Pipes
 
 Named pipes make multi-stream pipelines easier to describe in shell speak.
@@ -74,7 +72,6 @@ Named pipes make multi-stream pipelines easier to describe in shell speak.
 A read is not guaranteed to return only one chunk at a time.
 
 Also, writes do not block and there is no traffic flow.
-
 
 ## Differences from Named Sockets
 
@@ -84,7 +81,6 @@ It's not clear that reads are quantized.
 
 Writes do not block, no traffic flow.
 
-
 ## Differences from TCP Sockets
 
 TCP sockets explicitly do not guarantee message boundaries.
@@ -93,10 +89,9 @@ quantized arbitrarily from source endpoint to target endpoint.
 
 Writes do not block.
 
+## Differences from CMS Pipelines
 
-
-
-
-
+This implementation does not have its own dispatcher
+but instead uses the dispatcher built-into the operating system.
 
 
