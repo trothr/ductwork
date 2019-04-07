@@ -17,17 +17,10 @@ the record.
 The connection between stages is represented in source code by a C struct.
 
 
-
                         producer            consumer
                             ctrl <--------- ctrl
                             data ---------> data
                      OUTPUT mode            mode INPUT
-
-
-
-
-
-
 
 
 ## Ductwork Protocol
@@ -38,20 +31,24 @@ consumer stage. The consumer sends one of the following signals.
 
 * STAT
 
-When the consumer sends "STAT" on the control pipe
+When the consumer sends "STAT" on the control pipe,
 the producer must send a description of the waiting record.
+
 the only meta data at this point in the development
-          producer sends "DATA seq bytes"
+
+producer sends "DATA seq bytes"
 
 * PEEK
 
 think PIPLOCAT to examine a record
-          producer sends data
+
+producer sends data
 
 * NEXT
 
 think PIPINPUT (sort of) consume the record
-          producer sends "OKAY" and advances the sequence count
+
+producer sends "OKAY" and advances the sequence count
 
 * QUIT
 
