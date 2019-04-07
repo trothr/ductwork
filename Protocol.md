@@ -1,7 +1,6 @@
 # Ductwork Protocol
 
-This page describes the traffic flow over POSIX pipes
-lists core functions of the DUCTWORK library.
+This page describes the traffic flow over POSIX pipes.
 
 ## Ductwork Consumer/Producer Handshake
 
@@ -36,7 +35,7 @@ the producer must send a description of the waiting record.
 
 the only meta data at this point in the development
 
-producer sends "DATA seq bytes"
+producer sends "DATA bytes seq"
 
 * PEEK
 
@@ -58,6 +57,19 @@ for SEVER operation
 * FAIL errorcode
 
 if something went wrong
+
+## Example Write and Read of one Record
+
+The producer calls output(,srcbuf,) to write a record.
+
+The consumer calls readto(,dstbuf,) to read a record.
+
+                        producer            consumer
+                    read(ctrl,,) <--------- write(ctrl,"STAT",)
+   write(data,"DATA bytes seq",) ---------> read(data,,)
+                    read(ctrl,,) <--------- write(ctrl,"PEEK",)
+        write(data,srcbuf,bytes) ---------> read(data,dstbuf,bytes)
+                    read(ctrl,,) <--------- write(ctrl,"NEXT",)
 
 
 

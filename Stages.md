@@ -37,9 +37,19 @@ and then convey the output of the appended stage.
 
 * block
 
+Use the `block` stage to encapsulate records in any of several
+pre-defined formats.
+
 * deblock
 
+Use the `deblock` stage to reverse the effect of `block`.
+
 * fblock
+
+Use the `fblock` stage to reformat the bytes in a stream into
+fixed-length records. Input records will be split or joined as needed
+to form output records of identical size. The final record can be
+optionally padded.
 
 * drop
 
