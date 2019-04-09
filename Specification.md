@@ -1,7 +1,7 @@
 # Ductwork Specification
 
 This document outlines the design specification of
-the DUCTWORK project and enumerates the essential features.
+the Ductwork project and enumerates the essential features.
 
 ## Ductwork Design
 

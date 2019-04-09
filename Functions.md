@@ -1,6 +1,6 @@
 # Ductwork Functions
 
-This page lists core functions of the DUCTWORK library.
+This page lists core functions of the Ductwork library.
 
 ## Ductwork Functions
 
