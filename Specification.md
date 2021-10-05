@@ -9,16 +9,22 @@ Ductwork is a pipeline environment supporting "flow programming".
 It is inspired by CMS/TSO Pipelines and is intended to support
 a subset of the capability and syntax of that implementation.
 
-Syntactically, a basic Ductwork pipeline looks like a shell pipeline.
+A basic Ductwork pipeline looks like a shell pipeline.
+Unix and Linux shell users will recognize the syntax.
+
+A Ductwork pipeline can have multiple streams.
+Users of CMS/TSO Pipelines will immediately be able to construct
+pipelines that they could not with shell alone.
 
 Features of the Ductwork project:
 
 * out-of-band bounding
 
-Conceptually, records (or "packets" or "messages") in a Ductwork pipeline are similar to
-lines of text in a plaintext file or stream, such as program source. But records are
-delimited out of band so they can contain anything. (Embedded newline characters,
-or any characters includine NULL, do not affect the structure.)
+Records (or "packets" or "messages") in a Ductwork pipeline are
+conceptually similar to lines of text in a plain text file or stream,
+such as program source. But records in Ductwork are delimited out of
+band so they can contain anything. (Embedded newline characters,
+or any characters including NULL, do not affect the structure.)
 
 * independent stages
 
@@ -29,9 +35,9 @@ to the input of another stage.
 * packetized flow (bounded messages, record-oriented)
 
 Records (or packets, or messages) flow through the pipeline
-as whole entities. A record may correspond to a line of text
-but traditional Unix newline interpolation is opaque.
-(A record may contain any number of newline characters
+as whole entities. A record may correspond to a line of text.
+(Though traditional Unix newline interpolation is opaque.
+A record may contain any number of newline characters
 without affecting the structure of the record.)
 
 * peek first, then consume
@@ -46,7 +52,7 @@ To delay the record (or not) has a significant effect on traffic flow.
 
 * labeled streams
 
-The parser easily assembles multi-stream pipelines using labels.
+The parser can assemble multi-stream pipelines using labels.
 This makes for a superset of shell pipeline syntax.
 
 ## Differences from CMS/TSO Pipelines
@@ -59,17 +65,17 @@ CMS/TSO Pipelines concepts such as commit levels are not supported in Ductwork.
 
 ## Differences from Shell Pipes
 
-It's possible to construct multi-stream pipelines in a shell,
+It's possible to construct multi-stream pipelines in some shells,
 but the syntax is difficult.
 
-Writes do not block.
+Writes in shell pipes do not block.
 While a non-blocking write sounds convenient, it negates flow control.
 
 ## Differences from Named Pipes
 
 Named pipes make multi-stream pipelines easier to describe in shell speak.
 
-A read is not guaranteed to return only one chunk at a time.
+However, a read is not guaranteed to return only one chunk at a time.
 
 Also, writes do not block and there is no traffic flow.
 
@@ -87,11 +93,6 @@ TCP sockets explicitly do not guarantee message boundaries.
 Bytes (octets) are assured to arrive in order, but traffic may be
 quantized arbitrarily from source endpoint to target endpoint.
 
-Writes do not block.
-
-## Differences from CMS Pipelines
-
-This implementation does not have its own dispatcher
-but instead uses the dispatcher built-into the operating system.
+Writes with TCP Sockets do not block.
 
 
