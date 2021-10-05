@@ -35,19 +35,19 @@ This document does not explain CMS Pipelines or TSO Pipelines at all.
   For general
 information about CMS/TSO Pipelines, see the web page
 
-
 ## Links
 
 https://en.wikipedia.org/wiki/CMS_Pipelines
 
 http://vm.marist.edu/~pipeline/
 
-http://code.google.com/p/ductwork/
+<!-- http://code.google.com/p/ductwork/ -->
+
+http://www.casita.net/pub/ductwork/
 
 https://www.youtube.com/watch?v=AUsCdmjlaSU
 
 http://www.rvdheij.nl/pdweb/
-
 
 ## Contributing
 
