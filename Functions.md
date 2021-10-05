@@ -11,7 +11,7 @@ Most stages will have both input and output and may have multiples of either or 
 
 'buffer' is a pointer to a record data buffer.
 
-'buflen' is to an integer indicating the length of the record (for output)
+`buflen` is to an integer indicating the length of the record (for output)
 or the size of the buffer (for input). On return, input functions will have replaced
 the size available with the actual size of the record.
 
