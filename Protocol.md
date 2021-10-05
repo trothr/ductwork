@@ -25,44 +25,48 @@ The connection between stages is represented in source code by a C struct.
 ## Ductwork Protocol
 
 When the producer stage attempts to write a record,
-it blocks on a POSIX read awaiting instructions from the
-consumer stage. The consumer sends one of the following signals.
+it blocks on a POSIX read awaiting instructions via the `ctrl` channel
+from the consumer stage. The consumer sends one of the following signals.
+
+The "commands" the producer might receive include ...
 
 * `STAT`
 
 When the consumer sends "STAT" on the control pipe,
 the producer must send a description of the waiting record.
-
-the only meta data at this point in the development
-
-producer sends "DATA bytes seq"
+At this point in the development, the only meta data that a
+producer sends would be "`DATA` *bytes* *seq*", and *seq*
+is optional.
 
 * `PEEK`
 
-think PIPLOCAT to examine a record
+Think PIPLOCAT to examine a record, or the Rexx command '`PEEKTO`'.
 
-producer sends data
+The producer sends data, the content of the record.
 
 * `NEXT`
 
-think PIPINPUT (sort of) consume the record
+Think PIPINPUT (sort of) and the consumer consumes the record.
 
-producer sends "OKAY" and advances the sequence count
+The producer sends "`OKAY`" and advances the sequence count.
 
 * `QUIT`
 
-for SEVER operation
-          producer sends "`OKAY`"
+This is for SEVER operation.
 
-* FAIL errorcode
+The producer sends "`OKAY`".
 
-if something went wrong
+And we must have
+
+* `FAIL` *errorcode*
+
+if something went wrong.
 
 ## Example Write and Read of one Record
 
-The producer calls output(,srcbuf,) to write a record.
+The producer calls `output(,srcbuf,)` to write a record.
 
-The consumer calls readto(,dstbuf,) to read a record.
+The consumer calls `readto(,dstbuf,)` to read a record.
 
                           producer            consumer
                       read(ctrl,,) <--------- write(ctrl,"STAT",)
@@ -71,6 +75,13 @@ The consumer calls readto(,dstbuf,) to read a record.
           write(data,srcbuf,bytes) ---------> read(data,dstbuf,bytes)
                       read(ctrl,,) <--------- write(ctrl,"NEXT",)
 
+## A word about Shared Memory
 
+CMS/TSO Pipelines gets a major performance advantage by sharing memory
+from stage to stage. Please understand that here we're using POSIX sockets.
+In the name of "keep it simple", use of POSIX pipes is the starting point.
+But shared memory is planned for the future. Even so, there will always
+be situations where memory cannot be reliably shared, so POSIX pipes
+(AF_UNIX sockets) is always available.
 
 
