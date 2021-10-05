@@ -15,6 +15,10 @@ Most stages will have both input and output and may have multiples of either or 
 or the size of the buffer (for input). On return, input functions will have replaced
 the size available with the actual size of the record.
 
+`&ps` is pointer to a master pipeline struct. When a stage starts,
+it must call `pipeinit()` to populate this struct, which will then
+reference a number of `pd` structs.
+
 ## Ductwork Functions
 
 The following functions are available for 
@@ -95,8 +99,8 @@ Stages are launched by the operating system and will need structures
 allocated and populated with essential information about the pipeline
 they're running in.
 
-    rc = pipeinit();
+    rc = pipeinit(&ps);
 
-`pipeinit()` takes no arguments.
+`pipeinit()` takes one argument, a pointer to a master pipeline struct.
 
 
