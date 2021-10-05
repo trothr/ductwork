@@ -9,7 +9,7 @@ These are functions that the stages call.
 Any practical stage will have at least one input PD or output PD.
 Most stages will have both input and output and may have multiples of either or both.
 
-'buffer' is a pointer to a record data buffer.
+`buffer` is a pointer to a record data buffer.
 
 `buflen` is to an integer indicating the length of the record (for output)
 or the size of the buffer (for input). On return, input functions will have replaced
