@@ -64,21 +64,36 @@ Use the `sever()` function to disconnect a stream.
 
 * addpipe
 
+Use the `addpipe()` fuction to add a new pipeline to an existing stage.
+
     rc = addpipe(pipespec);
 
 * addstream
+
+Use the `addstream()` function to add a new stream to an running pipeline.
 
     rc = addstream(pipespec);
 
 * callpipe
 
+Use the `callpipe()` function to call a subordinate pipeline.
+
     rc = callpipe(pipespec);
 
 * runpipe
 
+Use the `runpipe()` function to launch a supplemental pipeline.
+
     rc = runpipe(pipespec);
 
 * pipeinit
+
+Use the `pipeinit()` function to initialize a stage.
+
+This is mandatory.
+Stages are launched by the operating system and will need structures
+allocated and populated with essential information about the pipeline
+they're running in.
 
     rc = pipeinit();
 
