@@ -11,9 +11,10 @@ Most stages will have both input and output and may have multiples of either or 
 
 `buffer` is a pointer to a record data buffer.
 
-`buflen` is to an integer indicating the length of the record (for output)
-or the size of the buffer (for input). On return, input functions will have replaced
-the size available with the actual size of the record.
+`buflen` is an integer indicating the size of the buffer (for input)
+or the length of the record (for output). A positive return code
+indicates the number of bytes in the record (for input) or the number
+of bytes successfully written (for output).
 
 `&ps` is pointer to a master pipeline struct. When a stage starts,
 it must call `pipeinit()` to populate this struct, which will then
@@ -31,6 +32,8 @@ Use the `peekto()` fuction to examine an input record without consuming it.
 
 The pipe descriptor struct `pd` must be an input connector.
 
+`peekto()` is intended to work like the POSIX system `read()` function.
+
 * readto
 
 Use the `readto()` fuction to read (or just consume) an input record.
@@ -45,6 +48,8 @@ then `readto()` will consume the record without saving it to the buffer.
 
 Note that records can have zero length.
 
+`readto()` is intended to work like the POSIX system `read()` function.
+
 * output
 
 Use the `output()` function to write a record.
@@ -53,6 +58,8 @@ Use the `output()` function to write a record.
     rc = output(&pd,buffer,buflen);
 
 The pipe descriptor struct `pd` must be an output connector.
+
+`output()` is intended to work like the POSIX system `write()` function.
 
 * streamstate
 
