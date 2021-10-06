@@ -56,7 +56,7 @@ This is for SEVER operation.
 
 The producer sends "`OKAY`".
 
-And we must have
+And we must have ...
 
 * `FAIL` *errorcode*
 
@@ -82,6 +82,6 @@ from stage to stage. Please understand that here we're using POSIX sockets.
 In the name of "keep it simple", use of POSIX pipes is the starting point.
 But shared memory is planned for the future. Even so, there will always
 be situations where memory cannot be reliably shared, so POSIX pipes
-(AF_UNIX sockets) is always available.
+(file descriptors) are always available.
 
 
