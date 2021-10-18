@@ -27,23 +27,49 @@ operating system (Unix, Linux, Windows, or even OpenVM).
 Ductwork accepts traditional Unix style options
 but also accepts traditional CMS and MVS style options.
 
+Ductwork does not require a closed system such as containment within a
+Java virtual machine (JVM).
+
 Too many technologies, services, systems, environments, projects, and libraries
 refer to "pipelines", so we use the name "ductwork" in hopes of conveying
 the full idea. If that doesn't work, maybe we'll call this thing "plenum".
 
-This document does not explain CMS Pipelines or TSO Pipelines at all.
-  For general
-information about CMS/TSO Pipelines, see the web page
+## Overview
 
-## Links
+Ductwork provides a command, '`pipe`'. The argument string to the
+'`pipe`' command is the pipeline specification. '`pipe'` selects
+programs to run and chains them together in a pipeline to pump data through.
+
+Ductwork pipelines do not involve the usual POSIX stdin and stdout interface.
+The chaining of Ductwork pipelines is more robust, bounded out of band,
+and flow controlled. Ductwork has a library of built-in programs that
+can be called in a pipeline specification. These built-in programs
+interface with the operating system, and perform many utility functions.
+
+Data on CMS is structured in logical records (or "packets" or "messages")
+rather than a stream of bytes. For textual data, a line of text corresponds
+to a logical record without a newline marker character. The data is passed
+by Ductwork between the stages as logical records.
+
+Ductwork users issue pipeline commands from the terminal, or in shell scripts,
+or in any standard programming environment. Users can write Ductwork "stage"
+programs in any language which compiles to native or in any interpreted
+language which can call the support library. This includes the popular
+Rexx language common on CMS and TSO. Home grown stages supplement
+the built-in Ductwork programs.
+
+This document does not explain CMS Pipelines or TSO Pipelines at all.
+For general information about CMS/TSO Pipelines, see the web page
 
 https://en.wikipedia.org/wiki/CMS_Pipelines
+
+## Additional Links
+
+http://www.casita.net/pub/ductwork/
 
 http://vm.marist.edu/~pipeline/
 
 <!-- http://code.google.com/p/ductwork/ -->
-
-http://www.casita.net/pub/ductwork/
 
 https://www.youtube.com/watch?v=AUsCdmjlaSU
 
