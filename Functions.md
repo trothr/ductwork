@@ -32,7 +32,11 @@ Use the `peekto()` fuction to examine an input record without consuming it.
 
 The pipe descriptor struct `pd` must be an input connector.
 
+The return code will indicate the actual numberof bytes in the record.
+A negative return code indicates an error.
+
 `peekto()` is intended to work like the POSIX system `read()` function.
+`peekto()` is inspired by the 'PEEKTO' command for Rexx based stages.
 
 * readto
 
@@ -47,8 +51,12 @@ or if the size indicated by `buflen` is zero,
 then `readto()` will consume the record without saving it to the buffer.
 
 Note that records can have zero length.
+To read a zero-length record, supply a `buflen` of at least 1.
+The return code will indicate the actual numberof bytes in the record.
+A negative return code indicates an error.
 
 `readto()` is intended to work like the POSIX system `read()` function.
+`readto()` is inspired by the 'READTO' command for Rexx based stages.
 
 * output
 
@@ -59,7 +67,11 @@ Use the `output()` function to write a record.
 
 The pipe descriptor struct `pd` must be an output connector.
 
+The return code will indicate the actual numberof bytes written.
+A negative return code indicates an error.
+
 `output()` is intended to work like the POSIX system `write()` function.
+`output()` is inspired by the 'OUTPUT' command for Rexx based stages.
 
 * streamstate
 
