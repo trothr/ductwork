@@ -2,7 +2,12 @@
  *
  *        Name: console.c (C program source)
  *        Date: 2010-Mar-24
+ *              2021-Oct-18 (Mon)
  *              Ductwork CONSOLE stage
+ *              This "stage" program serves as a 'console' interface
+ *              for a Ductwork pipeline. Use it at the head of a pipeline
+ *              to feed the pipeline from POSIX stdin. Use it at the
+ *              tail of a pipeline to feed POSIX stdout from the pipe.
  *
  */
 
@@ -15,13 +20,13 @@ struct PIPECONN PI0, PO0;  /* side, ctrl, data, buff, glob, recno */
 /* ------------------------------------------------------------------ */
 int main()
   {
-    static char _eyecatcher[] = "pipeline stage 'console' main()";
+    static char _eyecatcher[] = "Ductwork stage 'console' main()";
 
     /* initialize */
-    (void) pipeline_stageinit();
+    (void) stageinit();
 
     /* firstly, are we a first stage? */
-    switch (pipeline_streamstate(&PI0))
+    switch (streamstate(&PI0))
       {
         case 12:  /* with no primary input, we ARE a first stage */
         return s_console_fd0();
@@ -33,11 +38,11 @@ int main()
   }
 
 /* ---------------------------------------------------------------------
- *  We are READING from the "console" (that is, from FD0).
+ *  We are READING from the "console" (that is, from FD0, stdin).
  */
 int s_console_fd0()
   {
-    static char _eyecatcher[] = "pipeline stage 'console' s_console_fd0()";
+    static char _eyecatcher[] = "Ductwork stage 'console' s_console_fd0()";
 
     char  recdat[65536];
     int  reclen;
@@ -45,9 +50,9 @@ int s_console_fd0()
 
     /* "Do Forever" until we break out otherwise */
     while (1) {
-        if (pipeline_streamstate(&PO0) == 12) break;
+        if (streamstate(&PO0) == 12) break;
         rc = gets(recdat);
-        rc = pipeline_output(&PO0,recdat,rc);
+        rc = output(&PO0,recdat,rc);
         /* break for EOF on input or output or for error */
       }
 
@@ -56,11 +61,11 @@ int s_console_fd0()
   }
 
 /* ---------------------------------------------------------------------
- *  We are WRITING to the "console" (that is, to FD1).
+ *  We are WRITING to the "console" (that is, to FD1, stdout).
  */
 int s_console_fd1()
   {
-    static char _eyecatcher[] = "pipeline stage 'console' s_console_fd1()";
+    static char _eyecatcher[] = "Ductwork stage 'console' s_console_fd1()";
 
     char  recdat[65536];
     int  reclen;
@@ -69,7 +74,7 @@ int s_console_fd1()
     /* "Do Forever" until we break out otherwise */
     while (1) {
         /* perform a PEEKTO and see if there is a record ready */
-        reclen = pipeline_peekto(&PI0,recdat,0);
+        reclen = peekto(&PI0,recdat,0);
 
         /* return value is size of the record or an error */
         if (reclen < 0) break;
@@ -78,10 +83,10 @@ int s_console_fd1()
         puts(recdat);
 
         /* write the record to the output stream */
-        rc = pipeline_output(&PO0,recdat,reclen);
+        rc = output(&PO0,recdat,reclen);
 
         /* now consume the record from the input stream ala READTO */
-        (void) pipeline_readto(&PI0,0,0);
+        (void) readto(&PI0,0,0);
       }
 
     /* pass a return code to our caller */

@@ -15,6 +15,21 @@ Goals of the Ductwork project:
 * provide as many pre-defined stages as practical
 * allow custom stages in any language
 
+
+
+
+Each "stage" is a separate process.
+
+Stages can be written in any language.
+
+The "dispatcher" arranges file descriptors and spawns the stages.
+It then lingers, much like the shell does when running multiple
+stages (but the plumbing here is stronger), then exits when all
+sub-processes have exited.
+
+
+
+
 ## Ductwork
 
 Ductwork is a CMS/TSO Pipelines work-alike for POSIX systems,
@@ -30,9 +45,10 @@ but also accepts traditional CMS and MVS style options.
 Ductwork does not require a closed system such as containment within a
 Java virtual machine (JVM).
 
-Too many technologies, services, systems, environments, projects, and libraries
-refer to "pipelines", so we use the name "ductwork" in hopes of conveying
-the full idea. If that doesn't work, maybe we'll call this thing "plenum".
+Too many technologies, services, systems, environments, projects,
+and libraries refer to "pipelines", so we use the name "ductwork"
+in hopes of conveying the full idea. If that doesn't work,
+maybe we'll call this thing "plenum".
 
 ## Overview
 
