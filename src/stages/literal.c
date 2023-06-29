@@ -1,65 +1,66 @@
 /*
  *
- *        Name: literal.c
- *              safely concatenates all arguments into a single string
- *              and then writes that string to the output
+ *        Name: literal.c (C program source)
+ *              Ductwork LITERAL stage
+ *              sends the argument string to next stage via fpxoutput()
+ *              and then passes all input records to the output
+ *              fpxpeekto(), fpxoutput(), fpxreadto(), not delay record
  *        Date: 2023-06-09 (Friday) Gallatin
+ *              2023-06-27 (Tuesday) Belle Pre
  *
  */
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <errno.h>
 
-/* for development */
-#include <stdio.h>
+#include <fpxlib.h>
 
-#include <ductwork.h>
+/* for development */
+#include "fpxlib.c"
 
 int main(int argc,char*argv[])
   {
-    int i, buflen;
-    char *buffer, *p, *q;
+    static char _eyecatcher[] = "pipeline stage 'literal' main()";
 
-    /* account for intervening blanks between tokens                  */
-    buflen = argc;
-    /* result is plus one for all args, allowing for the terminator,  */
-    /* but also one more for argv[0] which is harmless, but we later  */
-    /* have to remember to back-off the count by TWO when writing     */
+    int i, buflen, rc;
+    char buffer[4096], *p, *q;
+    struct PIPECONN *pc, *pi, *po, *pn;
 
-    /* add-up the sizes of the tokens                                 */
-    for (i = 1; i < argc; i++) buflen = buflen + strlen(argv[i]);
 
-    /* allocate a buffer to hold the combined tokens as one string    */
-    buffer = malloc(buflen);
-    if (buffer == NULL)
-      { perror("malloc()");       /* provide a standard system report */
-        /* throw a pipelines/ductwork/plenum error and bail out       */
-//      fpxstageerror(errno);
-        return 1; }
+    /* NOTE: standard operation is for the dispatcher                 *
+     * to provide all arguments as a single string in argv[1].        */
 
-    /* insert the first token into the string                         */
-    p = buffer;
-    if (argc >= 2)
-      { q = argv[1]; while (*q) *p++ = *q++; *p = 0x00; }
+    /* initialize this stage                                          */
+    rc = fpxstagestart(&pc);
+    if (rc < 0) return 1;
 
-    /* now concatenate all remaining tokens delimited with blanks     */
-    for (i = 2; i < argc; i++)
-      { *p++ = ' ';        /* insert a blank space between the tokens */
-        q = argv[i]; while (*q) *p++ = *q++; *p = 0x00; }
 
-    /* back-off buffer length for to write the correct record length  */
-    buflen = buflen - 2;
+    /* snag the first input stream and the first output stream        */
+    pi = po = NULL;
+    for (pn = pc; pn != NULL; pn = pn->next)
+      { if (pn->side) { if (po == NULL) po = pn; }          /* output */
+                 else { if (pi == NULL) pi = pn; } }         /* input */
 
-printf(">%s< %d %d\n",buffer,buflen,strlen(buffer));
+    /* write the literal string to our primary output asa record      */
+    if (argc > 1 && *argv[1] != 0x00)
+if (po != NULL)
+      {
+    rc = fpxoutput(po,argv[1],strlen(argv[1]));
+    if (rc < 0) return 1;
+      }
 
-    /* initialize this stage, though we only need primary output      */
-//  rc = fpxstageinit();
 
-    /* write this record that we have labored so hard to create       */
-//  rc = fpxstageoutput(pc,buffer,buflen);
-
-    free(buffer);
+    while (1) {
+        buflen = sizeof(buffer) - 1;
+        rc = fpxpeekto(pi,buffer,buflen);             /* sip on input */
+        if (rc < 0) break; /* else */ buflen = rc;
+        rc = fpxoutput(po,buffer,buflen);       /* send it downstream */
+        if (rc < 0) break;
+        fpxreadto(pi,NULL,0);     /* consume the record after sending */
+      }
+    if (rc < 0) return 1;
 
     return 0;
   }
