@@ -1,0 +1,55 @@
+#
+#
+#
+#
+#
+
+E		=	
+O		=	.o
+XOBJECTS	=	pipe$E
+LOBJECTS	=	ductwork.$O stringup.$O
+INCLUDES	=	ductwork.h
+LIBRARIES	=	libductwork.a
+
+CFLAGS          =       %CFLAGS% -I..
+PREFIX          =       %PREFIX%
+LDFLAGS         =       %LDFLAGS%
+SHFLAGS         =       %SHFLAGS%
+
+.PHONY:  clean distclean veryclean \
+                allstages
+
+_default:
+	$(MAKE) allstages
+
+allstages:
+#	@ls *.c | sed 's#\.c##' | xargs -n 1 $(MAKE)
+	@for F in ` ls *.c | sed 's#\.c##' ` ; do \
+	  $(CC) $(CFLAGS) -o $$F$O -c $$F.c ; \
+	  $(CC) $(LDFLAGS) -o $$F $$F$O ../xpllib$O ../xmitmsgx$O \
+	    ; done
+
+
+#
+%$O:    makefile %.c
+	$(CC) $(CFLAGS) -o %$O -c %.c
+
+
+%:      makefile %$O ../xpllib.o ../xmitmsgx.o
+	$(CC) $(CFLAGS) -o % %$O ../*$O ../xpllib.o ../xmitmsgx.o
+
+
+#
+makefile:  makefile.in
+	@echo "$(MAKE): makefile is out of synch"
+	@echo "$(MAKE): you need to re-run ./configure"
+	@false
+
+clean:
+	rm -f *.o *.a *.so *.dll *.exe *$O
+	@ls *.c | sed 's#\.c##' | xargs rm -f
+
+distclean:  clean
+	@rm configure.h configure.sh
+
+

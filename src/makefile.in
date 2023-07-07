@@ -1,0 +1,84 @@
+#
+#
+#         Name: makefile (rules file for 'make') from makefile.in
+#       Author: Rick Troth, rogue programmer
+#         Date: 2023-07-07 (Friday) just before Israel
+#         Note: this makefile configured for %SYSTEM%
+#
+#
+
+PROJECTURL      =       http://www.casita.net/pub/ductwork
+
+E               =       
+O               =       .o
+XOBJECTS        =       pipe$E
+LOBJECTS        =       ductwork.o stringup.o
+INCLUDES        =       ductwork.h
+LIBRARIES       =       libductwork.a
+
+CFLAGS          =       %CFLAGS% -I.
+PREFIX          =       %PREFIX%
+LDFLAGS         =       %LDFLAGS%
+SHFLAGS         =       %SHFLAGS%
+
+
+.PHONY:  clean distclean veryclean
+
+
+_default:  xpllib.h
+
+
+#
+pipe.o:  makefile pipe.c
+	$(CC) $(CFLAGS) -o pipe.o -c pipe.c
+
+pipe:   makefile pipe.o xpllib.o xmitmsgx.o
+	$(CC) $(LDFLAGS) -o pipe pipe.o xpllib.o xmitmsgx.o
+
+
+%.txt:
+	wget $(PROJECTURL)/$@
+
+
+xmitmsgx.h:
+	cp -p xmitmsgx/xmitmsgx.h .
+
+xmitmsgx.o:
+	make -C xmitmsgx xmitmsgx.o
+	cp -p xmitmsgx/xmitmsgx.o .
+
+
+testbuild:  pipe$E
+
+
+testrun:  pipe$E
+	./pipe ' strliteral /THIS R A TEST/ | xlate lower | console '
+
+#pipe$E:		pipe$O $(LIBRARIES)
+#	$(CC) -L . -l ductwork -o pipe$E pipe$O
+#pipe$E:		pipe$O $(LOBJECTS)
+#	$(CC) -o pipe$E pipe$O $(LOBJECTS)
+
+#pipe$O:  pipe.c $(INCLUDES)
+#	$(CC) -o pipe$O -c pipe.c
+
+#libductwork.a:	$(LOBJECTS) $(INCLUDES)
+#	$(AR) r $@ $(LOBJECTS)
+
+#
+makefile:  makefile.in
+	@echo "$(MAKE): makefile is out of synch"
+	@echo "$(MAKE): you need to re-run ./configure"
+	@false
+
+clean:
+	rm -f *.o *.a
+	$(MAKE) -C xmitmsgx clean
+	$(MAKE) -C stages clean
+
+distclean:  clean
+	@rm configure.h configure.sh
+
+veryclean:  distclean
+
+

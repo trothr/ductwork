@@ -1,0 +1,24 @@
+# XPL - POSIX Pipelines
+
+
+
+## Manifest
+
+    manifest                    this file
+    configure                   configurator script
+    makefile.in                 skeleton makefile
+    xpllib.h                    header for the project, used by the dispatcher and all stages
+    xpllib.c                    library for the project, for the dispatcher and all stages
+    xpl.msgs                    message catalog
+    pipe.c                      primary command (the dispatcher, so to speak)
+
+    stages/                     see stages/manifest
+    stages/configure            configurator script
+    stages/makefile.in          skeleton makefile
+
+    xmitmsgx/configure          configurator script
+    xmitmsgx/makefile.in        skeleton makefile for the message handler
+    xmitmsgx/xmitmsgx.h         header for the message handler
+    xmitmsgx/xmitmsgx.c         library for the message handler
+
+

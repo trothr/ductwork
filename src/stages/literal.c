@@ -18,9 +18,6 @@
 
 #include <xpllib.h>
 
-/* for development */
-#include "xpllib.c"
-
 /* ------------------------------------------------------------------ */
 int main(int argc,char*argv[])
   {
@@ -47,22 +44,26 @@ printf("literal: (starting)\n");
 
     /* FIXME: provide an error message "no output stream */
     if (po == NULL) return 1;
+printf("literal: (YES output is connected)\n");
 
 //printf("literal: %s\n",argv[1]);
     /* write the literal string to our primary output stream          */
     if (argc > 1 && *argv[1] != 0x00)
       {
-        rc = xploutput(po,argv[1],strlen(argv[1]));
+//      p = argv[1];
 //p = "this R a test";
-//      rc = xploutput(po,p,strlen(p));
+p = xplcatargs(argc,argv);
+        rc = xploutput(po,p,strlen(p));
         if (rc < 0) return 1;
       }
-//printf("literal: %s (copy)\n",argv[1]);
+printf("literal: %s (sent the record)\n",argv[1]);
 
     /* once we have written the literal to the output stream
      * we then copy all input records, if any, to output              */
-    if (pi == NULL) return 0;
+//  if (pi == NULL) return 0;
+//printf("literal: (we seem to also have an input stream)\n");
 
+    if (pi != NULL)
     while (1) {
         buflen = sizeof(buffer) - 1;
         rc = xplpeekto(pi,buffer,buflen);             /* sip on input */
@@ -72,6 +73,12 @@ printf("literal: (starting)\n");
         xplreadto(pi,NULL,0);     /* consume the record after sending */
       }
     if (rc < 0) return 1;
+
+    /* terminate this stage cleanly                                   */
+    rc = xplstagequit(pc);
+    if (rc < 0) return 1;
+
+printf("literal: (normal exit)\n");
 
     return 0;
   }

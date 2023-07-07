@@ -1,0 +1,87 @@
+#!/bin/sh
+#
+#         Name: configure (shell script)
+#               part of the standard recipe
+#       Author: Rick Troth, rogue programmer
+#         Date: 2023-03-16 (Thu) and following
+#               2023-06-28 (Wed) added sub-project support
+#
+#
+
+cd `dirname "$0"`
+#D=`pwd`
+A="$*"
+
+PREFIX=/usr
+
+while [ ! -z "$*" ] ; do
+  case "$1" in
+    --prefix)
+      shift ; PREFIX="$1"
+      ;;
+    --prefix=*)
+      PREFIX=`echo "$1" | awk -F= '{print $2}'`
+      ;;
+    *)
+      echo "ignoring '$1'"
+      ;;
+  esac
+  shift
+done
+
+#
+US=`uname -s | sed 's#/##g'`
+UM=`uname -m | sed 's#^i.86$#i386#' | sed 's#^armv.l$#arm#'`
+case "$US" in
+  Linux|FreeBSD)
+    CFLAGS="$CFLAGS -fPIC"
+#   LDFLAGS=
+    SHFLAGS="$LDFLAGS -shared"
+    ;;
+  CYGWIN*)
+    US="CYGWIN"
+    SHFLAGS="$LDFLAGS -shared"
+    ;;
+  SunOS|AIX)
+    UM=`uname -p`
+    ;;
+  OS390)
+    UM="s390x" # guessing! since both "s390x" and "s390" are viable
+    CC="xlc"
+    LDFLAGS="-O -qxplink"
+    SHFLAGS="$LDFLAGS -qdll"
+    ;;
+esac
+
+# use the system string we just derived or override from Chicory
+if [ ! -z "$CHICORY_SYSTEM" ] ; then SYSTEM=$CHICORY_SYSTEM
+                                else SYSTEM="$US-$UM" ; fi
+
+# create proper makefile from reference input
+cat makefile.in \
+  | sed "s#%CFLAGS%#$CFLAGS#g" \
+  | sed "s#%PREFIX%#$PREFIX#g" \
+  | sed "s#%SYSTEM%#$SYSTEM#g" \
+  | sed "s#%LDFLAGS%#$LDFLAGS#g" \
+  | sed "s#%SHFLAGS%#$SHFLAGS#g" \
+  > makefile
+
+# create configuration header file
+rm -f configure.tmp
+echo "CFLAGS=#$CFLAGS#"  >> configure.tmp
+echo "PREFIX=#$PREFIX#"  >> configure.tmp
+echo "SYSTEM=#$SYSTEM#"  >> configure.tmp
+echo "LDFLAGS=#$LDFLAGS#" >> configure.tmp
+echo "SHFLAGS=#$SHFLAGS#" >> configure.tmp
+sed 's/#/"/g' < configure.tmp > configure.h
+sed 's/#/"/g' < configure.tmp > configure.sh ; chmod a+x configure.sh
+rm configure.tmp
+
+# for each sub-project run the 'configure' script found there
+for F in */configure ; do
+    if [ -x $F ] ; then $F $A ; fi
+done
+
+exit
+
+

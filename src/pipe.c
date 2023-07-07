@@ -14,6 +14,7 @@
  * - run all stages and wait for completion
  */
 
+
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -21,9 +22,6 @@
 #include <stdio.h>
 
 #include <xpllib.h>
-
-/* for development */
-#include "xpllib.c"
 
 /* -- this struct is only used in this program for the time being --- */
 typedef struct PLINE {
@@ -68,6 +66,7 @@ int xpl_pipe(PIPECONN**pc)
     struct PIPECONN p0, *pi, *po;
 
     rc = pipe(pdf);                  /* create the forward POSIX pipe */
+//  rc = pipe2(pdf,O_DIRECT);
     if (rc < 0)                                 return -1;
     rc = pipe(pdr);                  /* create the reverse POSIX pipe */
     if (rc < 0) { close(pdf[0]); close(pdf[1]); return -1; }
