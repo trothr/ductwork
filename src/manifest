@@ -5,20 +5,52 @@
 ## Manifest
 
     manifest                    this file
+    xfl.h                       header for the project, used by the launcher and all stages
+    xfl.msgs                    message catalog (compatible with CMS)
+
+    xmitmsgx/configure          configurator script for the message handler
+    xmitmsgx/makefile.in        skeleton makefile for the message handler
+    xmitmsgx/xmitmsgx.c         library for the message handler
+    xmitmsgx/xmitmsgx.h         header for the message handler
+
+
+
     configure                   configurator script
     makefile.in                 skeleton makefile
-    xpllib.h                    header for the project, used by the dispatcher and all stages
-    xpllib.c                    library for the project, for the dispatcher and all stages
-    xpl.msgs                    message catalog
-    pipe.c                      primary command (the dispatcher, so to speak)
+    xpllib.c                    library for the project, for the launcher and all stages
+    pipe.c                      primary command (the launcher)
 
     stages/                     see stages/manifest
     stages/configure            configurator script
     stages/makefile.in          skeleton makefile
 
-    xmitmsgx/configure          configurator script
-    xmitmsgx/makefile.in        skeleton makefile for the message handler
-    xmitmsgx/xmitmsgx.h         header for the message handler
-    xmitmsgx/xmitmsgx.c         library for the message handler
+ductwork/src/stringup.c
+ductwork/src/abbrevi.c
+
+git/ductwork/src/ductwork.c
+git/ttech/ductwork/src/ductwork.c
+
+git/ductwork/src/pipe.c
+git/ttech/ductwork/src/pipe.c
+
+git/ductwork/src/scaff1.c
+
+git/ductwork/src/stages/console.c
+git/ttech/ductwork/src/stages/console.c
+
+git/ductwork/src/stages/literal.c
+git/ttech/ductwork/src/stages/literal.c
+
+git/ttech/ductwork/src/stages/buffer.c
+
+git/ductwork/src/xmitmsgx/xmitmsgx.c
+git/ttech/ductwork/src/xmitmsgx/xmitmsgx.c
+
+
+git/ttech/ductwork/src/pipe-2010.c
+
+
+
+src/ductwork/shm.c
 
 
