@@ -22,17 +22,15 @@ This is the source directory for XPL, POSIX Pipelines
     stages/manifest             list of files providing stages
     stages/configure            configurator script
     stages/makefile.in          skeleton makefile
-        stages/buffer.c
-        stages/console.c
-        stages/literal.c
-
+    stages/console.c            CONSOLE stage reads stdin and/or writes stdout
+    stages/literal.c            LITERAL stage inserts literal strings into the stream
+    stages/buffer.c             BUFFER stage holds all records until end-of-input
 
         abbrevi.c               development
         ductwork.c              development
         ductwork.h              development
-        ductwork.txt
-        notes.txt
-        plenum.c
+        notes.txt               development
+        plenum.c                development
         stringup.c              development
 
 

@@ -6,6 +6,7 @@
 #         Date: 2023-03-16 (Thu) and following
 #               2023-06-28 (Wed) added sub-project support
 #
+#               See end of the script for additional details.
 #
 
 cd `dirname "$0"`
@@ -29,6 +30,7 @@ while [ ! -z "$*" ] ; do
   shift
 done
 
+LOCDIR=$PREFIX/share/locale                                   # xmitmsgx
 #
 US=`uname -s | sed 's#/##g'`
 UM=`uname -m | sed 's#^i.86$#i386#' | sed 's#^armv.l$#arm#'`
@@ -37,6 +39,8 @@ case "$US" in
     CFLAGS="$CFLAGS -fPIC"
 #   LDFLAGS=
     SHFLAGS="$LDFLAGS -shared"
+    if [ "$US" = FreeBSD -a ! -d "$LOCDIR" -a -d /usr/share/nls ] ; then
+                                          LOCDIR=/usr/share/nls ; fi
     ;;
   CYGWIN*)
     US="CYGWIN"
@@ -50,8 +54,15 @@ case "$US" in
     CC="xlc"
     LDFLAGS="-O -qxplink"
     SHFLAGS="$LDFLAGS -qdll"
+    if [ -d /usr/lib/nls/msg ] ; then LOCDIR=/usr/lib/nls/msg ; fi
     ;;
 esac
+
+#/usr/share/locale/
+#/usr/lib/nls/msg/
+#/usr/share/nls/
+#LOCALE=en_US.UTF-8
+#LOCALE=en_US
 
 # use the system string we just derived or override from Chicory
 if [ ! -z "$CHICORY_SYSTEM" ] ; then SYSTEM=$CHICORY_SYSTEM
@@ -64,28 +75,65 @@ cat makefile.in \
   | sed "s#%SYSTEM%#$SYSTEM#g" \
   | sed "s#%LDFLAGS%#$LDFLAGS#g" \
   | sed "s#%SHFLAGS%#$SHFLAGS#g" \
+  | sed "s#%LOCDIR%#$LOCDIR#g" \
   > makefile
 
 # create configuration header file
 rm -f configure.tmp
-echo "CFLAGS=#$CFLAGS#"  >> configure.tmp
-echo "PREFIX=#$PREFIX#"  >> configure.tmp
-echo "SYSTEM=#$SYSTEM#"  >> configure.tmp
+echo "CFLAGS=#$CFLAGS#"   >> configure.tmp
+echo "PREFIX=#$PREFIX#"   >> configure.tmp
+echo "SYSTEM=#$SYSTEM#"   >> configure.tmp
 echo "LDFLAGS=#$LDFLAGS#" >> configure.tmp
 echo "SHFLAGS=#$SHFLAGS#" >> configure.tmp
-sed 's/#/"/g' < configure.tmp > configure.h
-sed 's/#/"/g' < configure.tmp > configure.sh ; chmod a+x configure.sh
+echo "LOCDIR=#$LOCDIR#"   >> configure.tmp                    # xmitmsgx
+sed 's/#/"/g' < configure.tmp | awk '{print "#define" , $0}' > configure.h
+sed 's/#/"/g' < configure.tmp > configure.sh # chmod a+x configure.sh
 rm configure.tmp
 
 # for each sub-project run the 'configure' script found there
 for F in */configure ; do
-    if [ -x $F ] ; then $F $A ; fi
+    if [ -x $F ] ; then
+        echo "+ $F $A"
+        $F $A ; fi
 done
 
 exit
 
+#
+# This script attempts to perform the same function as 'configure'
+# as found in automake/autoconf packages, but is simpler.
+#
+#       Output: makefile
+#               configure.sh
+#               configure.h
+#
 
-##############################
-        xmitmsgx/makefile
-        xmitmsgx/xmmconfig.h
-        xmitmsgx/xmmconfig.sh
+#
+# The following is from an older XMM configure script:
+#
+
+# create a header for C sources
+sed 's/#/"/g' < xmmconfig.tmp \
+  | awk '{print "#define" , $0}' > xmmconfig.h
+#define VERSION not needed
+#define LOCALE not needed
+
+# create a shell resource config file
+sed 's/#/"/g' < xmmconfig.tmp > xmmconfig.sh
+
+rm xmmconfig.tmp
+
+exit
+
+
+FreeBSD:
+ make a shared library:
+  /usr/bin/cc -fPIC -shared -Wl,-soname,libxmitmsgxdyn.so -o libxmitmsgxdyn.so CMakeFiles/xmitmsgxdyn.dir/xmitmsgx.c.o
+ make a static library:
+  /usr/bin/ar qc libxmitmsgx.a CMakeFiles/xmitmsgx.dir/xmitmsgx.c.o
+  /usr/bin/ranlib libxmitmsgx.a
+
+
+CMAKE_SHARED_LINKER_FLAGS
+
+

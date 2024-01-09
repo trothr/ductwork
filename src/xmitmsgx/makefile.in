@@ -32,6 +32,9 @@ _default:	$(DELIVERABLES)
 
 all:		$(DELIVERABLES)
 
+xmmconfig.h:    configure.h
+		cat < configure.h > xmmconfig.h
+
 # this target is an 'ar' archive static library
 libxmitmsgx.a:  xmitmsgx.o
 #	$(LD) -static -o $@ $+
@@ -49,7 +52,7 @@ libxmitmsgxdyn.so:  xmitmsgx.o
 		$(CC) $(LDFLAGS) -shared -o libxmitmsgxdyn.so xmitmsgx.o
 
 # this object is the library
-xmitmsgx.o:     makefile xmitmsgx.c xmitmsgx.h
+xmitmsgx.o:     makefile xmitmsgx.c xmitmsgx.h xmmconfig.h
 		$(CC) $(CFLAGS) -o xmitmsgx.o -c xmitmsgx.c
 
 # fetch the source from GitHub
@@ -68,7 +71,7 @@ xmitmsg:	makefile xmitmsg.o xmitmsgx.o
 		$(CC) $(LDFLAGS) -o xmitmsg xmitmsg.o xmitmsgx.o
 #		strip xmitmsg
 
-xmitmsg.o:      makefile xmitmsg.c xmitmsgx.h
+xmitmsg.o:      makefile xmitmsg.c xmitmsgx.h xmmconfig.h
 		$(CC) $(CFLAGS) -o xmitmsg.o -c xmitmsg.c
 
 # fetch the source from GitHub
@@ -82,7 +85,7 @@ xmiterr:	makefile xmiterr.o xmitmsgx.o
 		$(CC) $(LDFLAGS) -o xmiterr xmiterr.o xmitmsgx.o
 
 # object deck for the 'xmiterr' program
-xmiterr.o:      makefile xmiterr.c xmitmsgx.h
+xmiterr.o:      makefile xmiterr.c xmitmsgx.h xmmconfig.h
 		$(CC) $(CFLAGS) -o xmiterr.o -c xmiterr.c
 
 # fetch the source from GitHub
@@ -96,7 +99,7 @@ xmmlogin:       makefile xmmlogin.o xmitmsgx.o
 		$(CC) $(LDFLAGS) -o xmmlogin xmmlogin.o xmitmsgx.o
 
 # object deck for the 'xmmlogin' program
-xmmlogin.o:     makefile xmmlogin.c xmitmsgx.h
+xmmlogin.o:     makefile xmmlogin.c xmitmsgx.h xmmconfig.h
 		$(CC) $(CFLAGS) -o xmmlogin.o -c xmmlogin.c
 
 # fetch the source from GitHub
@@ -112,7 +115,7 @@ xmsgtest:	makefile xmsgtest.o xmitmsgx.o
 #		$(CC) -o xmsgtest xmsgtest.o -L. -lxmitmsgx
 		$(CC) $(LDFLAGS) -o xmsgtest xmsgtest.o xmitmsgx.o
 
-xmsgtest.o:     makefile xmsgtest.c xmitmsgx.h
+xmsgtest.o:     makefile xmsgtest.c xmitmsgx.h xmmconfig.h
 		$(CC) $(CFLAGS) -o xmsgtest.o -c xmsgtest.c
 
 # fetch the source from GitHub
@@ -124,7 +127,7 @@ xmsgtest.c:
 # Rexx support
 rexx:           libxmmrexx.so
 
-xmmrexx.o:      makefile xmmrexx.c xmitmsgx.h
+xmmrexx.o:      makefile xmmrexx.c xmitmsgx.h xmmconfig.h
 		$(CC) $(CFLAGS) -o xmmrexx.o -c xmmrexx.c
 
 libxmmrexx.so:  xmmrexx.o xmitmsgx.o

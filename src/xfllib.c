@@ -15,6 +15,7 @@
 
 #include <xmitmsgx.h>
 struct MSGSTRUCT xflmsgs;
+char *xmmprefix = "";
 
 #include "xfl.h"
 

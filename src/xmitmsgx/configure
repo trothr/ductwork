@@ -3,11 +3,15 @@
 #         Name: configure (shell script)
 #               part of the standard recipe
 #       Author: Rick Troth, rogue programmer
-#         Date: 2023-03-16 (Thu)
+#         Date: 2023-03-16 (Thu) and following
+#               2023-06-28 (Wed) added sub-project support
 #
+#               See end of the script for additional details.
 #
 
 cd `dirname "$0"`
+#D=`pwd`
+A="$*"
 
 PREFIX=/usr
 
@@ -26,7 +30,7 @@ while [ ! -z "$*" ] ; do
   shift
 done
 
-LOCDIR=$PREFIX/share/locale
+LOCDIR=$PREFIX/share/locale                                   # xmitmsgx
 #
 US=`uname -s | sed 's#/##g'`
 UM=`uname -m | sed 's#^i.86$#i386#' | sed 's#^armv.l$#arm#'`
@@ -37,7 +41,6 @@ case "$US" in
     SHFLAGS="$LDFLAGS -shared"
     if [ "$US" = FreeBSD -a ! -d "$LOCDIR" -a -d /usr/share/nls ] ; then
                                           LOCDIR=/usr/share/nls ; fi
-    # xmsgtest: size of MSGSTRUCT is 232 bytes (FreeBSD-amd64)
     ;;
   CYGWIN*)
     US="CYGWIN"
@@ -45,8 +48,6 @@ case "$US" in
     ;;
   SunOS|AIX)
     UM=`uname -p`
-    # size of MSGSTRUCT is 172 bytes (SunOS-i386)
-    # size of MSGSTRUCT is 232 bytes (SunOS-x86_64)
     ;;
   OS390)
     UM="s390x" # guessing! since both "s390x" and "s390" are viable
@@ -54,7 +55,6 @@ case "$US" in
     LDFLAGS="-O -qxplink"
     SHFLAGS="$LDFLAGS -qdll"
     if [ -d /usr/lib/nls/msg ] ; then LOCDIR=/usr/lib/nls/msg ; fi
-    # size of MSGSTRUCT is 172 bytes (amode=31)
     ;;
 esac
 
@@ -64,7 +64,8 @@ esac
 #LOCALE=en_US.UTF-8
 #LOCALE=en_US
 
-if [ ! -z "$CHICORY_SYSTEM" ] ; then SYSTEM=CHICORY_SYSTEM
+# use the system string we just derived or override from Chicory
+if [ ! -z "$CHICORY_SYSTEM" ] ; then SYSTEM=$CHICORY_SYSTEM
                                 else SYSTEM="$US-$UM" ; fi
 
 # create proper makefile from reference input
@@ -78,13 +79,38 @@ cat makefile.in \
   > makefile
 
 # create configuration header file
-rm -f xmmconfig.tmp
-echo "CFLAGS=#$CFLAGS#"  >> xmmconfig.tmp
-echo "PREFIX=#$PREFIX#"  >> xmmconfig.tmp
-echo "SYSTEM=#$SYSTEM#"  >> xmmconfig.tmp
-echo "LDFLAGS=#$LDFLAGS#" >> xmmconfig.tmp
-echo "SHFLAGS=#$SHFLAGS#" >> xmmconfig.tmp
-echo "LOCDIR=#$LOCDIR#"  >> xmmconfig.tmp
+rm -f configure.tmp
+echo "CFLAGS=#$CFLAGS#"   >> configure.tmp
+echo "PREFIX=#$PREFIX#"   >> configure.tmp
+echo "SYSTEM=#$SYSTEM#"   >> configure.tmp
+echo "LDFLAGS=#$LDFLAGS#" >> configure.tmp
+echo "SHFLAGS=#$SHFLAGS#" >> configure.tmp
+echo "LOCDIR=#$LOCDIR#"   >> configure.tmp                    # xmitmsgx
+sed 's/#/"/g' < configure.tmp | awk '{print "#define" , $0}' > configure.h
+sed 's/#/"/g' < configure.tmp > configure.sh # chmod a+x configure.sh
+rm configure.tmp
+
+# for each sub-project run the 'configure' script found there
+for F in */configure ; do
+    if [ -x $F ] ; then
+        echo "+ $F $A"
+        $F $A ; fi
+done
+
+exit
+
+#
+# This script attempts to perform the same function as 'configure'
+# as found in automake/autoconf packages, but is simpler.
+#
+#       Output: makefile
+#               configure.sh
+#               configure.h
+#
+
+#
+# The following is from an older XMM configure script:
+#
 
 # create a header for C sources
 sed 's/#/"/g' < xmmconfig.tmp \
