@@ -64,15 +64,15 @@ int xfl_error(int,int,char**,char*);
 
 
 int xfl_stagestart(PIPECONN**);
-
 int xfl_peekto(PIPECONN*,void*,int);      /* pipeconn, buffer, buflen */
 int xfl_readto(PIPECONN*,void*,int);      /* pipeconn, buffer, buflen */
 int xfl_output(PIPECONN*,void*,int);      /* pipeconn, buffer, buflen */
-
 int xfl_stagequit(PIPECONN*);
 
 
-int xplstagespawn(int,char**,PIPECONN*,PIPECONN*);
+
+
+int xplstagespawn(int,char*[],PIPECONN*[],PIPECONN*[],PIPECONN*[]);
 
 
 #define _XFLLIB_H

@@ -1,56 +1,38 @@
 # XPL - POSIX Pipelines
 
-
+This is the source directory for XPL, POSIX Pipelines
 
 ## Manifest
 
     manifest                    this file
+    configure                   configurator script
+    makefile.in                 skeleton makefile
+
     xfl.h                       header for the project, used by the launcher and all stages
     xfl.msgs                    message catalog (compatible with CMS)
+    xpllib.c                    library for the project, for the launcher and all stages
+    pipe.c                      primary command (the launcher)
 
     xmitmsgx/configure          configurator script for the message handler
     xmitmsgx/makefile.in        skeleton makefile for the message handler
     xmitmsgx/xmitmsgx.c         library for the message handler
     xmitmsgx/xmitmsgx.h         header for the message handler
 
-
-
-    configure                   configurator script
-    makefile.in                 skeleton makefile
-    xpllib.c                    library for the project, for the launcher and all stages
-    pipe.c                      primary command (the launcher)
-
     stages/                     see stages/manifest
+    stages/manifest             list of files providing stages
     stages/configure            configurator script
     stages/makefile.in          skeleton makefile
-
-ductwork/src/stringup.c
-ductwork/src/abbrevi.c
-
-git/ductwork/src/ductwork.c
-git/ttech/ductwork/src/ductwork.c
-
-git/ductwork/src/pipe.c
-git/ttech/ductwork/src/pipe.c
-
-git/ductwork/src/scaff1.c
-
-git/ductwork/src/stages/console.c
-git/ttech/ductwork/src/stages/console.c
-
-git/ductwork/src/stages/literal.c
-git/ttech/ductwork/src/stages/literal.c
-
-git/ttech/ductwork/src/stages/buffer.c
-
-git/ductwork/src/xmitmsgx/xmitmsgx.c
-git/ttech/ductwork/src/xmitmsgx/xmitmsgx.c
+        stages/buffer.c
+        stages/console.c
+        stages/literal.c
 
 
-git/ttech/ductwork/src/pipe-2010.c
-
-
-
-src/ductwork/shm.c
+        abbrevi.c               development
+        ductwork.c              development
+        ductwork.h              development
+        ductwork.txt
+        notes.txt
+        plenum.c
+        stringup.c              development
 
 

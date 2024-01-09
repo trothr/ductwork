@@ -15,9 +15,6 @@ Goals of the Ductwork project:
 * provide as many pre-defined stages as practical
 * allow custom stages in any language
 
-
-
-
 Each "stage" is a separate process.
 
 Stages can be written in any language.
@@ -27,8 +24,9 @@ It then lingers, much like the shell does when running multiple
 stages (but the plumbing here is stronger), then exits when all
 sub-processes have exited.
 
-
-
+Hereafter we refer to it as the "launcher" because it is
+not a dispatcher in the sense of scheduling threads.
+That job is left to the operating system kernel.
 
 ## Ductwork
 
@@ -36,11 +34,13 @@ Ductwork is a CMS/TSO Pipelines work-alike for POSIX systems,
 providing the same basic functionality as that of of CMS/TSO Pipelines,
 but in a POSIX environment where IBM VM/CMS and IBM MVS/TSO are not available.
 
-Ductwork is compatible with CMS/TSO Pipelines at the command-line level
-as much as is possible.  Dispatching is handled by the underlying
-operating system (Unix, Linux, Windows, or even OpenVM).
-Ductwork accepts traditional Unix style options
-but also accepts traditional CMS and MVS style options.
+Ductwork is compatible, as much as is possible, with CMS Pipelines
+at the command-line level.  Dispatching is handled by the underlying
+operating system (Unix, Linux, Windows).  The difference in dispatching
+is a major functional difference between Ductwork and CMS Pipelines.
+
+Ductwork accepts traditional Unix style options (with dashes)
+but also accepts traditional CMS style options (in parentheses).
 
 Ductwork does not require a closed system such as containment within a
 Java virtual machine (JVM).
@@ -74,7 +74,7 @@ language which can call the support library. This includes the popular
 Rexx language common on CMS and TSO. Home grown stages supplement
 the built-in Ductwork programs.
 
-This document does not explain CMS Pipelines or TSO Pipelines at all.
+This document does not attempt to explain CMS Pipelines or TSO Pipelines.
 For general information about CMS/TSO Pipelines, see the web page
 
 https://en.wikipedia.org/wiki/CMS_Pipelines

@@ -145,37 +145,56 @@ printf("xmmake() returned %d\n",rc);
   }
 
 /* ---------------------------------------------------------- STAGESPAWN
+ *   Called by: ...
+ *       Calls: the stage indicated in argv[0]
  */
-int xplstagespawn(int argc,char*argv[],PIPECONN*pc,PIPECONN*pk)
+int xfl_stagespawn(int argc,char*argv[],PIPECONN*pi[],PIPECONN*po[],PIPECONN*pk[])
   /* argc - count of arguments much like Unix/POSIX main()            */
   /* argv - argument array much like Unix/POSIX main()                */
-  /* pc   - pipe connector(s) to this stage will use                  */
+  /* pi   - pipe connector(s) this stage will use for input           */
+  /* po   - pipe connector(s) this stage will use for output          */
   /* pk   - pipe connector(s) to kill-off before spawhing this stage  */
   {
-    char *myside, *myname, *p, *q, envbuf[8192], tmpbuf[256];
+    int rc, i;
+    char *p, *q, envbuf[8192], tmpbuf[256], pipepath[8192];
 
-    myname = NULL;
+    rc = fork();
+    if (rc < 0) return errno;       /* negative return code: an error */
+    if (rc > 0) return 0;       /* positive return code: PID of child */
+    /* FIXME: we should probably file that child PID for use later    */
+    /* and finally, return code zero means we are the child process   */
+
+//  myname = NULL;
     p = envbuf;
-    while (pc != NULL)
-      {
-        /* set "INPUT" or "OUTPUT" tag based on side element          */
-//      if (pc->side) myside = "OUTPUT"; else myside = "INPUT";
-        if (pc->flag & XFL_OUTPUT) myside = "OUTPUT";
-        if (pc->flag & XFL_INPUT)  myside = "INPUT";
-        /* if the connector is named then put the name into the token */
-        if (myname != NULL && myname != 0x00)
-        sprintf(tmpbuf,"*.%s.%s:%d,%d",myside,myname,pc->fdf,pc->fdr);
-        else
-        sprintf(tmpbuf,"*.%s:%d,%d",myside,pc->fdf,pc->fdr);
+
+    /* process input connectors */
+    i = 0; while (pi[i] != NULL)
+      { if (pi[i]->flag & XFL_OUTPUT)
+{ printf("fail\n"); exit(1); }
+        sprintf(tmpbuf,"*.INPUT.%d:%d,%d",i,pi[i]->fdf,pi[i]->fdr);
+
         /* copy this token into the environment variable buffer       */
         q = tmpbuf;
-        while (*q != 0x00) *p++ = *q++; *p++ = ' ';
-        /* now bump to the next PC structure in the chain             */
-        pc = pc->next;
-      }
-    *p = 0x00;                                /* terminate the string */
+        while (*q != 0x00) *p++ = *q++; *p++ = ' ';                    }
 
+    /* process output connectors */
+    i = 0; while (po[i] != NULL)
+      { if (po[i]->flag & XFL_INPUT)
+{ printf("fail\n"); exit(1); }
+        sprintf(tmpbuf,"*.OUTPUT.%d:%d,%d",i,po[i]->fdf,po[i]->fdr);
+
+        /* copy this token into the environment variable buffer       */
+        q = tmpbuf;
+        while (*q != 0x00) *p++ = *q++; *p++ = ' ';                    }
+
+    /* prepare to pass connector info to the stage */
+    *p = 0x00;                                /* terminate the string */
     setenv("PIPECONN",envbuf,1);
+
+    /* scan PIPEPATH for the stage ($PREFIX/lib/stages) */
+    strncpy(pipepath,getenv("PIPEPATH"),sizeof(pipepath)-1);
+
+
 
     if (argc > 1) q = argv[1];
              else q = "";

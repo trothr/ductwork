@@ -85,3 +85,7 @@ done
 exit
 
 
+##############################
+        xmitmsgx/makefile
+        xmitmsgx/xmmconfig.h
+        xmitmsgx/xmmconfig.sh
