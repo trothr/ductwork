@@ -85,4 +85,8 @@ has data available and writes that record to its output stream.
 Internally, `faninany` uses the POSIX `select()` system call
 to wait until traffic is available.
 
+* literal
+
+Use the `literal` stage to insert a line of text into a stream.
+
 

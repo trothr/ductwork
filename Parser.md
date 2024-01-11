@@ -54,15 +54,13 @@ The main Ductwork command allows options to be specified using
 VM/CMS style, for nominal compatibility with CMS/TSOPipelines,
 or using Unix style as is somewhat easier on other systems.
 
-    (stagesep char
-     endchar char
-     escape char)
+    (stagesep char endchar char escape char)
 
 Open parenthesis has special meaning for the shell,
 so the above must be enclosed within quotes.
 
 Furthermore, the standard stage separator also has meaning to the shell,
-so the entire pipeline should be enclosed in quotes.
+so the entire pipeline needs to be enclosed in quotes.
 
 You can put CMS/TSO syntax options (that is, with parenthesis)
 in the same quoted argument as the pipeline.

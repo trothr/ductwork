@@ -28,7 +28,7 @@ The following functions are available for
 
 Use the `peekto()` fuction to examine an input record without consuming it.
 
-    rc = peekto(&pd,buffer,buflen);
+    rc = xfl_peekto(&pd,buffer,buflen);
 
 The pipe descriptor struct `pd` must be an input connector.
 
@@ -42,7 +42,7 @@ A negative return code indicates an error.
 
 Use the `readto()` fuction to read (or just consume) an input record.
 
-    rc = readto(&pd,buffer,buflen);
+    rc = xfl_readto(&pd,buffer,buflen);
 
 The pipe descriptor struct `pd` must be an input connector.
 
@@ -63,7 +63,7 @@ A negative return code indicates an error.
 Use the `output()` function to write a record.
 `output()` blocks until the record is consumed.
 
-    rc = output(&pd,buffer,buflen);
+    rc = xfl_output(&pd,buffer,buflen);
 
 The pipe descriptor struct `pd` must be an output connector.
 
@@ -77,37 +77,37 @@ A negative return code indicates an error.
 
 Use the `streamstate()` function to interrogate the state of a stream.
 
-    rc = streamstate(&pd);
+    rc = xfl_streamstate(&pd);
 
 * sever
 
 Use the `sever()` function to disconnect a stream.
 
-    rc = sever(&pd);
+    rc = xfl_sever(&pd);
 
 * addpipe
 
 Use the `addpipe()` fuction to add a new pipeline to an existing stage.
 
-    rc = addpipe(pipespec);
+    rc = xfl_addpipe(pipespec);
 
 * addstream
 
 Use the `addstream()` function to add a new stream to an running pipeline.
 
-    rc = addstream(pipespec);
+    rc = xfl_addstream(pipespec);
 
 * callpipe
 
 Use the `callpipe()` function to call a subordinate pipeline.
 
-    rc = callpipe(pipespec);
+    rc = xfl_callpipe(pipespec);
 
 * runpipe
 
 Use the `runpipe()` function to launch a supplemental pipeline.
 
-    rc = runpipe(pipespec);
+    rc = xfl_runpipe(pipespec);
 
 * pipeinit
 
@@ -118,7 +118,7 @@ Stages are launched by the operating system and will need structures
 allocated and populated with essential information about the pipeline
 they're running in.
 
-    rc = pipeinit(&ps);
+    rc = xfl_stagestart(&ps);
 
 `pipeinit()` takes one argument, a pointer to a master pipeline struct.
 
