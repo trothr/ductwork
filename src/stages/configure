@@ -86,7 +86,7 @@ echo "SYSTEM=#$SYSTEM#"   >> configure.tmp
 echo "LDFLAGS=#$LDFLAGS#" >> configure.tmp
 echo "SHFLAGS=#$SHFLAGS#" >> configure.tmp
 echo "LOCDIR=#$LOCDIR#"   >> configure.tmp                    # xmitmsgx
-sed 's/#/"/g' < configure.tmp | awk '{print "#define" , $0}' > configure.h
+sed 's/#/"/g' < configure.tmp | awk '{print "#define" , $0}' | sed 's/=/ /' > configure.h
 sed 's/#/"/g' < configure.tmp > configure.sh # chmod a+x configure.sh
 rm configure.tmp
 

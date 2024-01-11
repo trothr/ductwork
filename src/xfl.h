@@ -33,6 +33,8 @@ IBM Systems
 #define     XFL_INPUT   0x0001
 #define     XFL_OUTPUT  0x0002
 
+#define     XFL_MAX_STREAMS  16
+
 typedef struct PIPECONN {
 
     int fdf;         /* forward flowing file descriptor used for data */

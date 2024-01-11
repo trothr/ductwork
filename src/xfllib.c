@@ -13,9 +13,11 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "configure.h"
+
 #include <xmitmsgx.h>
 struct MSGSTRUCT xflmsgs;
-char *xmmprefix = "";
+char *xmmprefix = PREFIX;
 
 #include "xfl.h"
 
@@ -116,12 +118,12 @@ int xfl_error(int msgn,int msgc,char*msgv[],char*caller)
     char msgbuf[256];
     int rc;
 
-xmopen("xfl",0,&xflmsgs);
+    rc = xmopen("xfl",0,&xflmsgs);
 
     /* some functions indicate the error with a negative number       */
     if (msgn < 0) msgn = 0 - msgn;
 
-    /* populate the message struct - some could be outside of the API */
+    /* populate the message struct - some of this is outside the API  */
     xflmsgs.msgnum = msgn;
     xflmsgs.msgc = msgc;
     xflmsgs.msgv = (unsigned char**) msgv;
@@ -136,10 +138,11 @@ xmopen("xfl",0,&xflmsgs);
     strncpy(xflmsgs.pfxmin,caller,4);
     /* also remember to up-case that */
 
+    /* make the message */
     rc = xmmake(&xflmsgs);
-printf("xmmake() returned %d\n",rc);
     if (rc != 0) return rc;
 
+    /* print it */
     fprintf(stderr,"%s\n",msgbuf);
 
     return 0;
@@ -206,8 +209,9 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pi[],PIPECONN*po[],PIPECONN*pk[
   }
 
 /* ---------------------------------------------------------- STAGESTART
+ * initialize the internal input and output connectors (two fd each)
  */
-int xplstagestart(PIPECONN**pc)
+int xfl_stagestart(PIPECONN**pc)
   {
     char *p, *pipeconn, number[16];
     struct PIPECONN pc0, *pc1;
@@ -227,8 +231,11 @@ int xplstagestart(PIPECONN**pc)
 //    PIPECONN='*.INPUT:3,6 '
         if (*p == '*') p++;
         if (*p == '.') p++;            /* else throw error number 191 */
+
         if (*p == 'I' || *p == 'i') pc0.flag = XFL_INPUT;
         if (*p == 'O' || *p == 'o') pc0.flag = XFL_OUTPUT;
+//0100    E Direction "&1" not input or output
+
         while (*p != 0x00 && *p != ' ' && *p != '.' && *p != ':') p++;
         pc0.name[0] = 0x00; pc0.n = 0;
         if (*p == '.')
@@ -283,7 +290,7 @@ int xplstagestart(PIPECONN**pc)
 /* ----------------------------------------------------------- STAGEQUIT
  *  do an orderly close of the file descriptors and release of storage
  */
-int xplstagequit(PIPECONN*pc)
+int xfl_stagequit(PIPECONN*pc)
   {
     struct PIPECONN *pn;
 
@@ -574,6 +581,35 @@ printf("xfl_output: infobuff = '%s'\n",infobuff);
 printf("xfl_output: (normal exit)\n");
 
     return 0;
+  }
+
+
+
+
+
+/* ---------------------------------------------------------------------
+NOT SURE THIS IS ACTUALLY NEEDED
+ */
+int xfl_parse(char*args,int*optc,char*optv[],char*rest)
+  {
+    return 0;
+  }
+
+
+/* -------------------------------------------------------------- ABBREV
+ * Returns length of info if info is an abbreviation of informat.
+ * Returns zero if info does not match or is shorter than minlen.
+ * Compare to abbrev() this version being *not* case sensitive.
+ */
+int xfl_abbrevi(char*informat,char*info,int minlen)
+  {
+    static char _eyecatcher[] = "abbrevi()";
+
+    int     i;
+    for (i = 0; info[i] != 0x00; i++)
+       if (tolower((int)informat[i]) != tolower((int)info[i])) return 0;
+    if (i < minlen) return 0;
+    return i;
   }
 
 

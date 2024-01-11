@@ -25,6 +25,8 @@
 
 #include "xmitmsgx.h"
 
+extern char *xmmprefix; /* installation prefix not application prefix */
+
 /* These are the locale environment variables we will interrogate:    */
 char *localevars[] = {
                 "LANG",
@@ -142,7 +144,7 @@ int xmopen(unsigned char*file,int opts,struct MSGSTRUCT*ms)
             (void) strncpy(ms->locale,locale,sizeof(ms->locale)-1);
 
             (void) snprintf(filename,sizeof(filename)-1,
-                "%s/share/locale/%s/%s.msgs",PREFIX,ms->locale,file);
+                "%s/share/locale/%s/%s.msgs",xmmprefix,ms->locale,file);
             rc = stat(filename,&statbuf);
             if (rc != 0) {
             (void) snprintf(filename,sizeof(filename)-1,
@@ -167,7 +169,7 @@ int xmopen(unsigned char*file,int opts,struct MSGSTRUCT*ms)
                 if (*p != 0x00) { *p = 0x00;
 
             (void) snprintf(filename,sizeof(filename)-1,
-                "%s/share/locale/%s/%s.msgs",PREFIX,ms->locale,file);
+                "%s/share/locale/%s/%s.msgs",xmmprefix,ms->locale,file);
             rc = stat(filename,&statbuf);
             if (rc != 0) {
             (void) snprintf(filename,sizeof(filename)-1,
@@ -196,7 +198,7 @@ int xmopen(unsigned char*file,int opts,struct MSGSTRUCT*ms)
             (void) strncpy(ms->locale,locale,sizeof(ms->locale)-1);
 
             (void) snprintf(filename,sizeof(filename)-1,
-                "%s/share/locale/%s/%s.msgs",PREFIX,ms->locale,file);
+                "%s/share/locale/%s/%s.msgs",xmmprefix,ms->locale,file);
             rc = stat(filename,&statbuf);
             if (rc != 0) {
             (void) snprintf(filename,sizeof(filename)-1,
@@ -297,7 +299,7 @@ int xmopen(unsigned char*file,int opts,struct MSGSTRUCT*ms)
 
     /* establish major and minor prefix area */
     /* if (ms->prefix == NULL || *ms->prefix == 0x00) */ ms->prefix = ms->applid;
-    p = ms->prefix;
+    p = ms->prefix;     /* application prefix not installation prefix */
     for (i = 0; i < 3 && *p != 0x00; i++) ms->pfxmaj[i] = toupper((int)*p++);
     ms->pfxmaj[i] = 0x00;
     for (i = 0; i < 3 && *p != 0x00; i++) ms->pfxmin[i] = toupper((int)*p++);

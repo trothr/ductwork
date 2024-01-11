@@ -2,12 +2,14 @@
  *
  *        Name: console.c (C program source)
  *              Ductwork CONSOLE stage
- *        Date: 2010-Mar-24, 2023-07
+ *        Date: 2010-Mar-24, 2023-07, 2024
+ *              reads stdin and writes to primary output
+ *               -or-
+ *              reads primary input and writes to stdout
  *
  */
 
 #include <stdio.h>
-
 
 #include <xfl.h>
 
@@ -22,12 +24,11 @@ int main(int argc,char*argv[])
 
 printf("console: (starting)\n");
 
-    /* NOTE: standard operation is for the dispatcher                 *
-     * to provide all arguments as a single string in argv[1].        */
-
     /* initialize this stage                                          */
     rc = xfl_stagestart(&pc);
     if (rc < 0) return 1;
+
+    /* ignoring command line arguments during development             */
 
     /* snag the first input stream and the first output stream        */
     pi = po = NULL;
@@ -44,11 +45,12 @@ printf("console: (top of loop)\n");
         buflen = sizeof(buffer) - 1;
         rc = xfl_peekto(pi,buffer,buflen);             /* sip on input */
         if (rc < 0) break; /* else */ buflen = rc;
+        buffer[buflen] = 0x00;      /* terminate the string for stdout */
 printf("console: '%s' %d (input peeked)\n",buffer,rc);
 printf("\n%s\n\n",buffer);
-        if (po != NULL)
-        rc = xfl_output(po,buffer,buflen);       /* send it downstream */
-        if (rc < 0) break;
+//      if (po != NULL)
+//      rc = xfl_output(po,buffer,buflen);       /* send it downstream */
+//      if (rc < 0) break;
         xfl_readto(pi,NULL,0);     /* consume the record after sending */
 printf("console: (record consumed)\n");
       }
@@ -91,6 +93,12 @@ int oldmain()
 #include <stdlib.h>
 #include <string.h>
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+
 #endif
+
+//      xfl_error(61,0,NULL,"LIT");        /* provide specific report */
 
 

@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include <xpllib.h>
+#include <xfl.h>
 
 /* ------------------------------------------------------------------ */
 int main(int argc,char*argv[])
@@ -24,46 +24,53 @@ int main(int argc,char*argv[])
     static char _eyecatcher[] = "pipeline stage 'literal' main()";
 
     int i, buflen, rc;
-    char buffer[4096], *p, *q;
+    char buffer[4096], *p, *q, *args;
     struct PIPECONN *pc, *pi, *po, *pn;
 
 printf("literal: (starting)\n");
 
-    /* NOTE: standard operation is for the dispatcher                 *
-     * to provide all arguments as a single string in argv[1].        */
+/*
+ * init/start                                                      works
+ * get args                                                        works
+ * write string to primary output
+ * quit
+ */
 
     /* initialize this stage                                          */
-    rc = xplstagestart(&pc);
+    rc = xfl_stagestart(&pc);
     if (rc < 0) return 1;
+
+    /* string-up the command line arguments                           */
+    args = xfl_argcat(argc,argv);
+    if (args == NULL) return 1;
+
+printf("literal: '%s'\n",args);
 
     /* snag the first input stream and the first output stream        */
     pi = po = NULL;
     for (pn = pc; pn != NULL; pn = pn->next)
-      { if (pn->flag & XPL_OUTPUT) { if (po == NULL) po = pn; }
-        if (pn->flag & XPL_INPUT)  { if (pi == NULL) pi = pn; } }
+      { if (pn->flag & XFL_OUTPUT) { if (po == NULL) po = pn; }
+        if (pn->flag & XFL_INPUT)  { if (pi == NULL) pi = pn; } }
 
     /* FIXME: provide an error message "no output stream */
-    if (po == NULL) return 1;
+    if (po == NULL)
+      {
+        xfl_error(61,0,NULL,"LIT");        /* provide specific report */
+        return 1;
+      }
 printf("literal: (YES output is connected)\n");
 
-//printf("literal: %s\n",argv[1]);
     /* write the literal string to our primary output stream          */
-    if (argc > 1 && *argv[1] != 0x00)
-      {
-//      p = argv[1];
-//p = "this R a test";
-p = xplcatargs(argc,argv);
-        rc = xploutput(po,p,strlen(p));
-        if (rc < 0) return 1;
-      }
+    rc = xfl_output(po,args,0);
+    if (rc < 0) return 1;
 printf("literal: %s (sent the record)\n",argv[1]);
 
-    /* once we have written the literal to the output stream
-     * we then copy all input records, if any, to output              */
-//  if (pi == NULL) return 0;
-//printf("literal: (we seem to also have an input stream)\n");
 
+    /* proper pipeline: once we have written the literal to the       *
+     * output, we then copy all input records, if any, to the output  */
+#ifdef PROPER_PIPELINE
     if (pi != NULL)
+//printf("literal: (we seem to also have an input stream)\n");
     while (1) {
         buflen = sizeof(buffer) - 1;
         rc = xplpeekto(pi,buffer,buflen);             /* sip on input */
@@ -73,9 +80,11 @@ printf("literal: %s (sent the record)\n",argv[1]);
         xplreadto(pi,NULL,0);     /* consume the record after sending */
       }
     if (rc < 0) return 1;
+#endif
+
 
     /* terminate this stage cleanly                                   */
-    rc = xplstagequit(pc);
+    rc = xfl_stagequit(pc);
     if (rc < 0) return 1;
 
 printf("literal: (normal exit)\n");

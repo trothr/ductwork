@@ -6,38 +6,44 @@
 
 E		=	
 O		=	.o
+LIB             =       .a
+DLL             =       .so
 XOBJECTS	=	pipe$E
-LOBJECTS	=	ductwork.$O stringup.$O
+LOBJECTS	=	ductwork$O stringup$O
 INCLUDES	=	ductwork.h
-LIBRARIES	=	libductwork.a
+LIBRARIES       =       libductwork$(LIB)
 
 CFLAGS          =       %CFLAGS% -I..
 PREFIX          =       %PREFIX%
-LDFLAGS         =       %LDFLAGS%
+LDFLAGS         =       %LDFLAGS% -L.. -lxfl -L../xmitmsgx -lxmitmsgx
 SHFLAGS         =       %SHFLAGS%
 
-.PHONY:  clean distclean veryclean \
-                allstages
+.PHONY:  clean distclean veryclean help \
+                all allstages
 
 _default:
 	$(MAKE) allstages
 
-allstages:
+all allstages:
 #	@ls *.c | sed 's#\.c##' | xargs -n 1 $(MAKE)
 	@for F in ` ls *.c | sed 's#\.c##' ` ; do \
+	  echo "+ $(CC) $(CFLAGS) -o $$F$O -c $$F.c" ; \
 	  $(CC) $(CFLAGS) -o $$F$O -c $$F.c ; \
-	  $(CC) $(LDFLAGS) -o $$F $$F$O ../xpllib$O ../xmitmsgx$O \
-	    ; done
-
+	  echo "+ $(CC) -o $$F $$F$O $(LDFLAGS)" ; \
+	  $(CC) -o $$F $$F$O $(LDFLAGS) ; \
+	    done
+#../xfllib$O ../xmitmsgx$O \
 
 #
 %$O:    makefile %.c
 	$(CC) $(CFLAGS) -o %$O -c %.c
 
-
-%:      makefile %$O ../xpllib.o ../xmitmsgx.o
-	$(CC) $(CFLAGS) -o % %$O ../*$O ../xpllib.o ../xmitmsgx.o
-
+%:      makefile %$O
+#../xfllib.o ../xmitmsgx.o
+#	$(CC) $(CFLAGS) -o % %$O ../*$O ../xfllib.o ../xmitmsgx.o
+	$(CC) -o % %$O $(LDFLAGS)
+#	cc -o literal literal.o $(LDFLAGS)
+#../*$O ../xfllib.o ../xmitmsgx.o
 
 #
 makefile:  makefile.in
@@ -51,5 +57,10 @@ clean:
 
 distclean:  clean
 	@rm configure.h configure.sh
+
+
+#literal.o:      makefile literal.c
+#		cc -fPIC -I.. -o literal.o -c literal.c
+
 
 
