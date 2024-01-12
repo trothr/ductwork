@@ -60,10 +60,8 @@ typedef struct PIPECONN {
 
 char*xfl_argcat(int,char*[]);                   /* FKA xplcatargs     */
 
-
-int xfl_parse(char*,int*,char*[],char*);
 int xfl_error(int,int,char**,char*);
-
+int xfl_pipepair(PIPECONN*[]);          /* allocate an in/out pair */
 
 int xfl_stagestart(PIPECONN**);
 int xfl_peekto(PIPECONN*,void*,int);      /* pipeconn, buffer, buflen */
@@ -71,11 +69,11 @@ int xfl_readto(PIPECONN*,void*,int);      /* pipeconn, buffer, buflen */
 int xfl_output(PIPECONN*,void*,int);      /* pipeconn, buffer, buflen */
 int xfl_stagequit(PIPECONN*);
 
-
-
-
+/* the following are still in development */
+int xfl_stageexec(char*,PIPECONN*[]);
 int xplstagespawn(int,char*[],PIPECONN*[],PIPECONN*[],PIPECONN*[]);
 
+int xfl_parse(char*,int*,char*[],char*);
 
 #define _XFLLIB_H
 #endif

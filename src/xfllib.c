@@ -13,6 +13,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include <fcntl.h>
+
 #include "configure.h"
 
 #include <xmitmsgx.h>
@@ -76,11 +78,11 @@ char*xfl_argcat(int argc,char*argv[])
 
     if (buffer == NULL)
       { char *msgv[2], em[16]; int en;
-        en = errno;
+        en = errno;    /* hold onto the error value in case it resets */
         perror("catargs(): malloc()");     /* provide standard report */
         /* also throw a pipelines/ductwork/plenum error and bail out  */
         sprintf(em,"%d",en); msgv[1] = em;       /* integer to string */
-        xfl_error(26,2,msgv,"LIB");         /* provide specific report */
+        xfl_error(26,2,msgv,"LIB");        /* provide specific report */
         return NULL; }
 
     /* insert the first token into the string                         */
@@ -144,6 +146,40 @@ int xfl_error(int msgn,int msgc,char*msgv[],char*caller)
 
     /* print it */
     fprintf(stderr,"%s\n",msgbuf);
+
+    return 0;
+  }
+
+/* ----------------------------------------------------------- STAGEEXEC
+ *   Called by: ...
+ *       Calls: ...
+ *
+ * NOTE: this routine is destructive to the argument string supplied
+ */
+int xfl_stageexec(char*args,PIPECONN*pc[])
+  {
+    char *verb, *argv[3];
+    PIPECONN *pi, *po;
+
+    /* skip past any leading white space */
+    while (*args == ' ' || *args == '\t') args++;
+    verb = args;
+    while (*args != 0x00 && *args != ' ' && *args != '\t') args++;
+    if (*args != 0x00) *args++ = 0x00;
+
+printf("xfl_stageexec(): verb '%s'\n",verb);
+if (args != NULL && *args != 0x00)
+printf("xfl_stageexec(): args '%s'\n",args);
+    argv[0] = verb;
+    argv[1] = args;
+    argv[2] = args;
+
+    pi = pc[0];
+    po = pc[1];
+if (pi != NULL) printf("*.INPUT:%d,%d\n",pi->fdf,pi->fdr);
+if (po != NULL) printf("*.OUTPUT:%d,%d\n",po->fdf,po->fdr);
+
+
 
     return 0;
   }
@@ -283,6 +319,56 @@ int xfl_stagestart(PIPECONN**pc)
       }
 
 
+
+    return 0;
+  }
+
+/* ------------------------------------------------------------ PIPEPAIR
+ * Conceptually similar to POSIX pipe() function, returns two ends.
+ */
+int xfl_pipepair(PIPECONN*pp[])
+  {
+    struct PIPECONN p0, *pi, *po;
+    int fdf[2], fdr[2];
+
+    /* we need *two* traditional POSIX/Unix pipes */
+    pipe(fdf);                  /* forward for data */
+    pipe(fdr);                  /* reverse for control */
+    /* FIXME: need to check for errors after these calls */
+
+    /* establish the side used for input */
+    pi = malloc(sizeof(p0));    /* pipeline input */
+    if (pi == NULL)
+      { char *msgv[2], em[16]; int en;
+        en = errno;    /* hold onto the error value in case it resets */
+        perror("xfl_pipepair(): malloc()");        /* standard report */
+        sprintf(em,"%d",en); msgv[1] = em;       /* integer to string */
+        xfl_error(26,2,msgv,"LIB");        /* provide specific report */
+        return en; }
+    pi->fdf /* read  */ = fdf[0]; /* data forward */
+    pi->fdr /* write */ = fdr[1]; /* control back */
+//printf("xfl_pipepair(): *.INPUT:%d,%d\n",pi->fdf,pi->fdr);
+    pi->flag = XFL_INPUT;
+
+    /* establish the side used for output */
+    po = malloc(sizeof(p0));    /* pipeline output */
+    if (po == NULL)
+      { char *msgv[2], em[16]; int en;
+        en = errno;    /* hold onto the error value in case it resets */
+        perror("xfl_pipepair(): malloc()");        /* standard report */
+        free(pi);     /* the other malloc() worked so free that block */
+        sprintf(em,"%d",en); msgv[1] = em;       /* integer to string */
+        xfl_error(26,2,msgv,"LIB");        /* provide specific report */
+        return en; }
+    po->fdf /* write */ = fdf[1]; /* data forward */
+    po->fdr /* read  */ = fdr[0]; /* control back */
+//printf("xfl_pipepair(): *.OUTPUT:%d,%d\n",po->fdf,po->fdr);
+    po->flag = XFL_OUTPUT;
+
+    /* follow POSIX pipe() semantics: two plenum connectors           */
+    pp[0] = pi;                 /* [0] refers to the read end */
+    pp[1] = po;                 /* [1] refers to the write end */
+    /* see 'man 2 pipe' on most Unix or Linux systems for the idea    */
 
     return 0;
   }
