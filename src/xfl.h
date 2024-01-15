@@ -26,8 +26,8 @@ IBM Systems
 
 #ifndef _XFLLIB_H
 
-//static char *_ductwork_version = "Ductwork 0.7.5";
-#define  XFL_VERSION  (((0) << 24) + ((7) << 16) + ((5) << 8) + (0))
+//static char *_ductwork_version = "Ductwork 0.7.6";
+#define  XFL_VERSION  (((0) << 24) + ((7) << 16) + ((6) << 8) + (0))
 //static int xfl_version = XFL_VERSION;
 
 #define     XFL_INPUT   0x0001

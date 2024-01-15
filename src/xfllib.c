@@ -470,7 +470,7 @@ int xfl_peekto(PIPECONN*pc,void*buffer,int buflen)
 //printf("xfl_peekto: sent STAT control %d\n",rc);
 
     /* PROTOCOL:                                                      */
-    /* read the response which should simply have an int string */
+    /* read the response which should simply have an integer string   */
     rc = read(pc->fdf,infobuff,sizeof(infobuff));
     if (rc < 0)
       { char *msgv[2], em[16];
@@ -481,7 +481,7 @@ int xfl_peekto(PIPECONN*pc,void*buffer,int buflen)
         xfl_error(26,2,msgv,"LIB");         /* provide specific report */
         return rc; }
     infobuff[rc] = 0x00;
-printf("xfl_peekto: infobuff = '%s'\n",infobuff);
+//printf("xfl_peekto: infobuff = '%s'\n",infobuff);
 
     /* convert integer string into a binary integer */
 //  if (*infobuff is non-digit) then set this connector to close
@@ -489,8 +489,8 @@ printf("xfl_peekto: infobuff = '%s'\n",infobuff);
     if (isdigit(*infobuff))
     reclen = atoi(infobuff);
 //  else { /* shutdown */ }
+//printf("xfl_peekto: expecting %d bytes\n",reclen);
 
-printf("xfl_peekto: expecting %d bytes\n",reclen);
 
     /* undocumented feature: zero-length peekto tells the record size */
     if (buflen == 0) return reclen;
@@ -510,7 +510,7 @@ printf("xfl_peekto: expecting %d bytes\n",reclen);
         sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
         xfl_error(26,2,msgv,"LIB");         /* provide specific report */
         return rc; }
-printf("xfl_peekto: sent PEEK; expecting %d bytes\n",reclen);
+//printf("xfl_peekto: sent PEEK; expecting %d bytes\n",reclen);
 
     /* PROTOCOL:                                                      */
     rc = read(pc->fdf,buffer,reclen);
@@ -598,7 +598,7 @@ int n;
       { printf("xfl_output: called for a non-output connector\n");
         return -1; } // FIXME: get a better return code
 
-printf("xfl_output: '%s' %d %d\n",buffer,buflen,strlen(buffer));
+//printf("xfl_output: '%s' %d %d\n",buffer,buflen,strlen(buffer));
 
 n = 0;
     while (1)
@@ -619,7 +619,7 @@ n = n + 1;
 printf("xfl_output: error trying to read the control channel after %d %d\n",n,rc);
             return rc; }
         infobuff[rc] = 0x00;
-printf("xfl_output: infobuff = '%s'\n",infobuff);
+//printf("xfl_output: infobuff = '%s'\n",infobuff);
 
         xx = 0;
         switch (*infobuff)
