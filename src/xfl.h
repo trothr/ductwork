@@ -43,8 +43,8 @@ typedef struct PIPECONN {
                  /* control goes "upstream" from consumer to producer */
     int flag;   /* which side of the connection, producer or consumer */
 
-    char name[16];            /* name of connector for a named stream */
-    int n;               /* number of connector for a numbered stream */
+//  char name[16];            /* name of connector for a named stream */
+//  int n;               /* number of connector for a numbered stream */
 
     int rn;   /* record number - how many records have been processed */
     /* This leads to 1-based indexing because when this is zero       */

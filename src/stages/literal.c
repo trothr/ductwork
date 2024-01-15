@@ -23,11 +23,11 @@ int main(int argc,char*argv[])
   {
     static char _eyecatcher[] = "pipeline stage 'literal' main()";
 
-    int i, buflen, rc;
+    int i, buflen, rc, argl;
     char buffer[4096], *p, *q, *args;
     struct PIPECONN *pc, *pi, *po, *pn;
 
-printf("literal: (starting)\n");
+//printf("literal: (starting)\n");
 
 /*
  * init/start                                                      works
@@ -44,7 +44,7 @@ printf("literal: (starting)\n");
     args = xfl_argcat(argc,argv);
     if (args == NULL) return 1;
 
-printf("literal: '%s'\n",args);
+//printf("literal: '%s'\n",args);
 
     /* snag the first input stream and the first output stream        */
     pi = po = NULL;
@@ -58,12 +58,13 @@ printf("literal: '%s'\n",args);
         xfl_error(61,0,NULL,"LIT");        /* provide specific report */
         return 1;
       }
-printf("literal: (YES output is connected)\n");
+//printf("literal: YES output is connected\n");
 
     /* write the literal string to our primary output stream          */
-    rc = xfl_output(po,args,0);
+    argl = strlen(args);
+    rc = xfl_output(po,args,argl);
     if (rc < 0) return 1;
-printf("literal: %s (sent the record)\n",argv[1]);
+//printf("literal: %s (sent the record)\n",argv[1]);
 
 
     /* proper pipeline: once we have written the literal to the       *
@@ -87,7 +88,7 @@ printf("literal: %s (sent the record)\n",argv[1]);
     rc = xfl_stagequit(pc);
     if (rc < 0) return 1;
 
-printf("literal: (normal exit)\n");
+//printf("literal: (normal exit)\n");
 
     return 0;
   }

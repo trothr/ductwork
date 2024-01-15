@@ -22,7 +22,7 @@ int main(int argc,char*argv[])
     char buffer[4096], *p, *q;
     struct PIPECONN *pc, *pi, *po, *pn;
 
-printf("console: (starting)\n");
+//printf("console: (starting)\n");
 
     /* initialize this stage                                          */
     rc = xfl_stagestart(&pc);
@@ -44,6 +44,8 @@ printf("console: (starting)\n");
         msgv[1] = "0"; msgv[2] = "1";
         xfl_error(1493,3,msgv,"CON");      /* provide specific report */
         return 1; }
+    if (pi != NULL)
+//printf("console: we seem to have an input stream\n");
 
 
 
@@ -51,14 +53,14 @@ printf("console: (starting)\n");
 
     while (1) {
 
-printf("console: (top of loop)\n");
+//printf("console: (top of loop)\n");
         buflen = sizeof(buffer) - 1;
 
         rc = xfl_peekto(pi,buffer,buflen);             /* sip on input */
         if (rc < 0) break; /* else */ buflen = rc;
         buffer[buflen] = 0x00;      /* terminate the string for stdout */
-printf("console: '%s' %d (input peeked)\n",buffer,rc);
-printf("\n%s\n\n",buffer);
+//printf("console: '%s' %d (input peeked)\n",buffer,rc);
+printf("\n>>>%s<<<\n\n",buffer);
 
 //      printf("%s\n",buffer);
 //      if (po != NULL)
@@ -66,7 +68,7 @@ printf("\n%s\n\n",buffer);
 //      if (rc < 0) break;
 
         xfl_readto(pi,NULL,0);     /* consume the record after sending */
-printf("console: (record consumed)\n");
+//printf("console: (record consumed)\n");
       }
     if (rc < 0) return 1;
 
@@ -74,7 +76,7 @@ printf("console: (record consumed)\n");
     rc = xfl_stagequit(pc);
     if (rc < 0) return 1;
 
-printf("console: (normal exit)\n");
+//printf("console: (normal exit)\n");
 
     return 0;
   }

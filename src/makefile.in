@@ -8,6 +8,7 @@
 #
 
 PROJECTURL      =       http://www.casita.net/pub/ductwork
+DELIVERABLES    =       libxfl.a libxmitmsgx.a
 
 E               =       
 O               =       .o
@@ -20,64 +21,126 @@ LIBRARIES       =       libductwork$(LIB)
 
 CFLAGS          =       %CFLAGS% -I.
 PREFIX          =       %PREFIX%
-LDFLAGS         =       %LDFLAGS%
+LDFLAGS         =       %LDFLAGS% -L. -lxfl -lxmitmsgx
 SHFLAGS         =       %SHFLAGS%
+# we may later use CC, CXX, CPP, CPPFLAGS, and/or CXXFLAGS
 
-.PHONY:  clean distclean veryclean
+MKAR            =       $(AR) r
 
-_default:  xfllib.h
+# identify targets without actual files to match
+.PHONY:         _default all clean distclean veryclean help \
+                libraries
+
+# first target serves as the default, but name it that way anyway
+_default:	$(DELIVERABLES)
+
+all:		$(DELIVERABLES)
+
+# pseudo target to build static and shared libraries
+libraries:      libxfl$(LIB) libxfl$(DLL)
+
+# fetch the source from GitHub
+pipe.c:
+		@echo "$(MAKE): you need $@"
+		wget $(PROJECTURL)/$@
 
 #
-pipe.o:  makefile pipe.c
-	$(CC) $(CFLAGS) -o pipe.o -c pipe.c
+pipe.o:         makefile pipe.c
+		$(CC) $(CFLAGS) -o pipe.o -c pipe.c
 
-pipe:   makefile pipe.o xfllib.o xmitmsgx.o
-	$(CC) $(LDFLAGS) -o pipe pipe.o xfllib.o xmitmsgx.o
+#
+pipe:           makefile pipe.o xfllib.o xmitmsgx.o
+		$(CC) $(LDFLAGS) -o pipe pipe.o xfllib.o xmitmsgx.o
+
+#
+xfllib.c:
+		@echo "$(MAKE): fetching the library source"
+		wget $(PROJECTURL)/$@
+
+#
+xfllib.o:       xfllib.c xfl.h
+		@echo "$(MAKE): compiling the library ..."
+		$(CC) $(CFLAGS) -o xfllib$O -c xfllib.c
+
+#
+libxfl$(LIB):   xfllib$O
+		@echo "$(MAKE): building the library ..."
+		@rm -f libxfl$(LIB)
+		$(MKAR) libxfl$(LIB) xfllib$O
+
+#
+libxfl$(DLL):   xfllib$O
+		$(CC) $(LDFLAGS) -shared -o libxfl$(DLL) xfllib$O
 
 
-%.txt:
-	wget $(PROJECTURL)/$@
-
-
+#
 xmitmsgx.h:
-	cp -p xmitmsgx/xmitmsgx.h .
-
-xmitmsgx.o:
-	make -C xmitmsgx xmitmsgx.o
-	cp -p xmitmsgx/xmitmsgx.o .
-
-
-testbuild:  pipe$E
-
-
-testrun:  pipe$E
-	./pipe ' strliteral /THIS R A TEST/ | xlate lower | console '
-
-#pipe$E:		pipe$O $(LIBRARIES)
-#	$(CC) -L . -l ductwork -o pipe$E pipe$O
-#pipe$E:		pipe$O $(LOBJECTS)
-#	$(CC) -o pipe$E pipe$O $(LOBJECTS)
-
-#pipe$O:  pipe.c $(INCLUDES)
-#	$(CC) -o pipe$O -c pipe.c
-
-#libductwork.a:	$(LOBJECTS) $(INCLUDES)
-#	$(AR) r $@ $(LOBJECTS)
+		$(MAKE) -C xmitmsgx xmitmsgx.h
+		cp -p xmitmsgx/xmitmsgx.h .
 
 #
-makefile:  makefile.in
+xmitmsgx.o:
+		$(MAKE) -C xmitmsgx xmitmsgx.o
+		cp -p xmitmsgx/xmitmsgx.o .
+
+#
+libxmitmsgx$(LIB):
+		$(MAKE) -C xmitmsgx libxmitmsgx$(LIB)
+		cp -p xmitmsgx/libxmitmsgx$(LIB) .
+
+
+
+
+
+#
+# yeah, we need an "install" target
+install:        $(DELIVERABLES)
+		@mkdir -p $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/include \
+		  $(PREFIX)/share/locale/$(LOCALE) $(PREFIX)/sbin # $(PREFIX)/src
+#		cp -p xmitmsg xmiterr $(PREFIX)/bin/.
+#		cp -p libxmitmsgx.a *.so $(PREFIX)/lib/.
+#		cp -p xmitmsgx.h $(PREFIX)/include/.
+#		cp -p xmitmsgx.msgs errno.msgs $(PREFIX)/share/locale/$(LOCALE)/.
+#		cp -p xmitmivp.sh $(PREFIX)/sbin/.
+
+
+#
+makefile:       makefile.in configure
 	@echo "$(MAKE): makefile is out of synch"
 	@echo "$(MAKE): you need to re-run ./configure"
 	@false
 
+# fetch the sources from GitHub
+makefile.in:
+		@echo "$(MAKE): you need $@"
+		wget $(PROJECTURL)/$@
+
+configure:
+		@echo "$(MAKE): you need $@"
+		wget $(PROJECTURL)/$@
+
+# reset things for a fresh build from source
 clean:
-	rm -f *.o *.a
-	$(MAKE) -C xmitmsgx clean
-	$(MAKE) -C stages clean
+		rm -f *.o *.a *.so *.dylib *.rpm *.class *$(LIB) *$(DLL)
+		$(MAKE) -C xmitmsgx clean
+		$(MAKE) -C stages clean
 
-distclean:  clean
-	@rm configure.h configure.sh
+distclean:      clean
+		@rm configure.h configure.sh
 
-veryclean:  distclean
+veryclean:      distclean
+
+help:
+
+
+
+
+#
+# 'make' tips:
+# $@ is the target
+# $+ is the list of dependencies but does not work everywhere
+#
+
+
 
 

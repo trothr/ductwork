@@ -158,7 +158,8 @@ int xfl_error(int msgn,int msgc,char*msgv[],char*caller)
  */
 int xfl_stageexec(char*args,PIPECONN*pc[])
   {
-    char *verb, *argv[3];
+    int rc;
+    char *verb, *argv[3], pipeconn[256], pipeprog[256], *p;
     PIPECONN *pi, *po;
 
     /* skip past any leading white space */
@@ -167,17 +168,39 @@ int xfl_stageexec(char*args,PIPECONN*pc[])
     while (*args != 0x00 && *args != ' ' && *args != '\t') args++;
     if (*args != 0x00) *args++ = 0x00;
 
-printf("xfl_stageexec(): verb '%s'\n",verb);
+//printf("xfl_stageexec(): verb '%s'\n",verb);
 if (args != NULL && *args != 0x00)
-printf("xfl_stageexec(): args '%s'\n",args);
+//printf("xfl_stageexec(): args '%s'\n",args);
     argv[0] = verb;
     argv[1] = args;
-    argv[2] = args;
+    argv[2] = NULL;
 
+    p = pipeconn;
     pi = pc[0];
     po = pc[1];
-if (pi != NULL) printf("*.INPUT:%d,%d\n",pi->fdf,pi->fdr);
-if (po != NULL) printf("*.OUTPUT:%d,%d\n",po->fdf,po->fdr);
+    if (pi != NULL)
+      {
+//      printf("*.INPUT:%d,%d\n",pi->fdf,pi->fdr);
+        rc = sprintf(p,"*.INPUT:%d,%d ",pi->fdf,pi->fdr);
+//      if (rc < 0) ...
+        p = &p[rc];
+      }
+    if (po != NULL)
+      {
+//      printf("*.OUTPUT:%d,%d\n",po->fdf,po->fdr);
+        rc = sprintf(p,"*.OUTPUT:%d,%d ",po->fdf,po->fdr);
+//      if (rc < 0) ...
+        p = &p[rc];
+      }
+    setenv("PIPECONN",pipeconn,1);
+//system("sh -c set | grep PIPECONN");
+
+    sprintf(pipeprog,"stages/%s",verb);
+    execv(pipeprog,argv);
+/*
+    execve(pipeprog,argv,NULL);
+ */
+
 
 
 
@@ -250,22 +273,22 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pi[],PIPECONN*po[],PIPECONN*pk[
 int xfl_stagestart(PIPECONN**pc)
   {
     char *p, *pipeconn, number[16];
-    struct PIPECONN pc0, *pc1;
+    struct PIPECONN pc0, *pc1, *pcp;
     int i;
 
     *pc = NULL;
+    pcp = NULL;
 
     pipeconn = getenv("PIPECONN");
     /* for the time being it is okay having connections established   */
     if (pipeconn == NULL) return 0;
-//printf("PIPECONN='%s'\n",pipeconn);
+//printf("stagestart: PIPECONN='%s'\n",pipeconn);
 
     /* parse the connections passed to this stage in the environment  */
     p = pipeconn;
     while (*p != 0x00 && *p != ' ')
       {
-//    PIPECONN='*.INPUT:3,6 '
-        if (*p == '*') p++;
+        if (*p == '*') p++;        /* skip past "*." to I/O indicator */
         if (*p == '.') p++;            /* else throw error number 191 */
 
         if (*p == 'I' || *p == 'i') pc0.flag = XFL_INPUT;
@@ -273,13 +296,13 @@ int xfl_stagestart(PIPECONN**pc)
 //0100    E Direction "&1" not input or output
 
         while (*p != 0x00 && *p != ' ' && *p != '.' && *p != ':') p++;
-        pc0.name[0] = 0x00; pc0.n = 0;
-        if (*p == '.')
-          { p++;
-            for (i = 0; i < sizeof(pc0.name) - 1 &&
-                        *p != 0x00 && *p != ' ' && *p != '.' && *p != ':' && *p != ','; i++)
-                pc0.name[i] = *p++;
-            pc0.name[i] = 0x00; }
+//      pc0.name[0] = 0x00; pc0.n = 0;  // see notes, development
+//      if (*p == '.')
+//        { p++;
+//          for (i = 0; i < sizeof(pc0.name) - 1 &&
+//                      *p != 0x00 && *p != ' ' && *p != '.' && *p != ':' && *p != ','; i++)
+//              pc0.name[i] = *p++;
+//          pc0.name[i] = 0x00; }
 //printf("pc0.name = '%s'\n",pc0.name);
         /* if there is a name and it is numeric then it is a number   */
         if (*p == ':')                 /* else throw error number 193 */
@@ -297,9 +320,6 @@ int xfl_stagestart(PIPECONN**pc)
                 number[i] = *p++;
             number[i] = 0x00; pc0.fdr = atoi(number); }
 
-//printf("fdf = %d\n",pc0.fdf);
-//printf("fdr = %d\n",pc0.fdr);
-
         pc0.next = NULL;
         pc0.prev = *pc;
 
@@ -307,18 +327,12 @@ int xfl_stagestart(PIPECONN**pc)
         pc1 = malloc(sizeof(pc0));
         // check for error
         if (*pc == NULL) *pc = pc1;
+              else pcp->next = pc1;
         memcpy(pc1,&pc0,sizeof(pc0));
-
-
-
-
-
-
+        pcp = pc1;
 
         while (*p != 0x00 && *p == ' ') p++;
       }
-
-
 
     return 0;
   }
@@ -380,14 +394,18 @@ int xfl_stagequit(PIPECONN*pc)
   {
     struct PIPECONN *pn;
 
-printf("xfl_stagequit: hello\n");
+//printf("xfl_stagequit: hello\n");
 
     while (pc != NULL)
       {
         /* if an input connector then signal the producer to quit     */
-        if (pc->flag && XFL_INPUT) write(pc->fdr,"QUIT",sizeof("QUIT"));
+        if (pc->flag && XFL_INPUT)
+          { printf("xfl_stagequit: signaling consumer to sever the connection\n");
+             write(pc->fdr,"QUIT",sizeof("QUIT")); }
+        else printf("xfl_stagequit: output side, no signal\n");
 
         /* in any case close the forward and reverse file descriptors */
+        printf("xfl_stagequit: closing file descriptors\n");
         close(pc->fdf); close(pc->fdr);
 
         /* proceed to next struct in the chain and free this one      */
@@ -396,7 +414,7 @@ printf("xfl_stagequit: hello\n");
         pc = pn;
       }
 
-printf("xfl_stagequit: goodbye\n");
+//printf("xfl_stagequit: goodbye\n");
 
     return 0;
   }
@@ -404,66 +422,66 @@ printf("xfl_stagequit: goodbye\n");
 /* -------------------------------------------------------------- PEEKTO
  *  CONSUMER SIDE
  *  Returns: number of bytes in the record or negative for error
+ *  A return value of zero is not an error if the record was null.
+ *  See also: xfl_readto() and xfl_output()
  */
 int xfl_peekto(PIPECONN*pc,void*buffer,int buflen)
-  {
-    static char _eyecatcher[] = "xfl_peekto()";
+  { static char _eyecatcher[] = "xfl_peekto()";
     int  rc, reclen;
     char  infobuff[256];
 
     /* be sure we are on the input side of the connection             */
-    if ((pc->flag && XFL_INPUT) == 0) return -1;    //FIXME: get a better return code
-//printf("readto: okay but bailing out for development\n");
+    if ((pc->flag && XFL_INPUT) == 0)
+      { printf("xfl_peekto: called for a non-input connector\n");
+        return -1; }  //FIXME: get a better return code
+//printf("peekto: okay but bailing out for development\n");
 //return -614;
 
 /*
 
 "STAT" ** the only meta data at this point in the development
-          producer sends "DATA seq bytes"
+          producer sends number of bytes available
 
 "PEEK" ** think PIPLOCAT to examine a record
           producer sends data
 
 "NEXT" ** think PIPINPUT (sort of) consume the record
-          producer sends "OKAY" and advances the sequence count
+          producer advances the sequence count
 
 "QUIT" ** for SEVER operation
-          producer sends "OKAY"
+          producer closes file descriptors
 
 "FAIL" ** if something went wrong
 
-          consumer may also receive a "FAIL" from any of the above
-
  */
-
 
     /* PROTOCOL:                                                      */
     /* direct the producer to report the size of this record */
-    rc = write(pc->fdr,"STAT",sizeof("STAT"));
-//  rc = write(pc->fdr,"STAT",strlen("STAT")+1);
+//  rc = write(pc->fdr,"STAT",sizeof("STAT"));
+    rc = write(pc->fdr,"STAT",4);
     if (rc < 0)
       { char *msgv[2], em[16];
-        rc = errno; if (rc = 0) rc = -1;
+        rc = errno; if (rc == 0) rc = -1;
         perror("peekto(): write():");      /* provide standard report */
         /* also throw a pipelines/ductwork/plenum error and bail out  */
         sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
         xfl_error(26,2,msgv,"LIB");         /* provide specific report */
         return rc; }
-printf("xfl_readto: sent STAT control %d\n",rc);
+//printf("xfl_peekto: sent STAT control %d\n",rc);
 
     /* PROTOCOL:                                                      */
     /* read the response which should simply have an int string */
     rc = read(pc->fdf,infobuff,sizeof(infobuff));
     if (rc < 0)
       { char *msgv[2], em[16];
-        rc = errno; if (rc = 0) rc = -1;
+        rc = errno; if (rc == 0) rc = -1;
         perror("peekto(): read():");       /* provide standard report */
         /* also throw a pipelines/ductwork/plenum error and bail out  */
         sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
         xfl_error(26,2,msgv,"LIB");         /* provide specific report */
         return rc; }
     infobuff[rc] = 0x00;
-printf("xfl_readto: infobuff = '%s'\n",infobuff);
+printf("xfl_peekto: infobuff = '%s'\n",infobuff);
 
     /* convert integer string into a binary integer */
 //  if (*infobuff is non-digit) then set this connector to close
@@ -472,8 +490,7 @@ printf("xfl_readto: infobuff = '%s'\n",infobuff);
     reclen = atoi(infobuff);
 //  else { /* shutdown */ }
 
-
-printf("xfl_readto: expecting %d bytes\n",reclen);
+printf("xfl_peekto: expecting %d bytes\n",reclen);
 
     /* undocumented feature: zero-length peekto tells the record size */
     if (buflen == 0) return reclen;
@@ -483,86 +500,84 @@ printf("xfl_readto: expecting %d bytes\n",reclen);
 
     /* PROTOCOL:                                                      */
     /* direct the producer to send the record content */
-    rc = write(pc->fdr,"PEEK",sizeof("PEEK"));
-//  rc = write(pc->fdr,"PEEK",strlen("PEEK")+1);
+//  rc = write(pc->fdr,"PEEK",sizeof("PEEK"));
+    rc = write(pc->fdr,"PEEK",4);
     if (rc < 0)
       { char *msgv[2], em[16];
-        rc = errno; if (rc = 0) rc = -1;
+        rc = errno; if (rc == 0) rc = -1;
         perror("peekto(): write():");      /* provide standard report */
         /* also throw a pipelines/ductwork/plenum error and bail out  */
         sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
         xfl_error(26,2,msgv,"LIB");         /* provide specific report */
         return rc; }
-printf("xfl_readto: sent PEEK control\n");
+printf("xfl_peekto: sent PEEK; expecting %d bytes\n",reclen);
 
-
-printf("xfl_readto: expecting %d bytes\n",reclen);
     /* PROTOCOL:                                                      */
     rc = read(pc->fdf,buffer,reclen);
     if (rc < 0)
       { char *msgv[2], em[16];
-        rc = errno; if (rc = 0) rc = -1;
+        rc = errno; if (rc == 0) rc = -1;
         perror("peekto(): read():");       /* provide standard report */
         /* also throw a pipelines/ductwork/plenum error and bail out  */
         sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
         xfl_error(26,2,msgv,"LIB");         /* provide specific report */
         return rc; }
-//  buffer[reclen] = 0x00;
-
 
     return rc;
   }
 
-
 /* -------------------------------------------------------------- READTO
  *  CONSUMER SIDE
  *  Returns: number of bytes in the record or negative for error
+ *  A return value of zero is not an error if the record was null.
+ *  See also: xfl_peekto() and xfl_output()
  */
 int xfl_readto(PIPECONN*pc,void*buffer,int buflen)
-  {
-    static char _eyecatcher[] = "xfl_readto()";
+  { static char _eyecatcher[] = "xfl_readto()";
     int  rc;
     char  infobuff[256];
 
+    /* be sure we are on the input side of the connection             */
+    if ((pc->flag && XFL_INPUT) == 0)
+      { printf("xfl_readto: called for a non-input connector\n");
+        return -1; } // FIXME: get a better return code
 
+    /* if buffer supplied and length not zero then try to get data    */
     if (buffer != NULL && buflen > 0)
-      {
-        rc = xfl_peekto(pc,buffer,buflen);
-        if (rc < 0) return rc;
-      }
+      { rc = xfl_peekto(pc,buffer,buflen);
+        if (rc < 0) return rc; }
+    /* this also checks things like which side this connector is for  */
 
     /* PROTOCOL:                                                      */
     /* direct the producer to proceed with the next record */
-    rc = write(pc->fdr,"NEXT",sizeof("NEXT"));
-//  rc = write(pc->fdr,"NEXT",strlen("NEXT")+1);
+//  rc = write(pc->fdr,"NEXT",sizeof("NEXT"));
+    rc = write(pc->fdr,"NEXT",4);
     if (rc < 0)
       { char *msgv[2], em[16];
-        rc = errno; if (rc = 0) rc = -1;
-        perror("peekto(): write():");      /* provide standard report */
+        rc = errno; if (rc == 0) rc = -1;
+        perror("readto(): write():");      /* provide standard report */
         /* also throw a pipelines/ductwork/plenum error and bail out  */
         sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
         xfl_error(26,2,msgv,"LIB");         /* provide specific report */
         return rc; }
-
 
     /* PROTOCOL:                                                      */
     /* read the response which should be simply "OKAY" */
-    rc = read(pc->fdf,infobuff,sizeof(infobuff));
-    if (rc < 0)
-      { char *msgv[2], em[16];
-        rc = errno; if (rc = 0) rc = -1;
-        perror("readto(): read():");       /* provide standard report */
-        /* also throw a pipelines/ductwork/plenum error and bail out  */
-        sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
-        xfl_error(26,2,msgv,"LIB");         /* provide specific report */
-        return rc; }
+//  rc = read(pc->fdf,infobuff,sizeof(infobuff));
+//  if (rc < 0)
+//    { char *msgv[2], em[16];
+//      rc = errno; if (rc == 0) rc = -1;
+//      perror("readto(): read():");       /* provide standard report */
+//      /* also throw a pipelines/ductwork/plenum error and bail out  */
+//      sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
+//      xfl_error(26,2,msgv,"LIB");         /* provide specific report */
+//      return rc; }
 
     /* increment the record counter */
     pc->rn = pc->rn + 1;
 
     return 0;
   }
-
 
 /* -------------------------------------------------------------- OUTPUT
  *  PRODUCER SIDE
@@ -572,38 +587,36 @@ int xfl_readto(PIPECONN*pc,void*buffer,int buflen)
  *  See also: xfl_peekto() and xfl_readto()
  */
 int xfl_output(PIPECONN*pc,void*buffer,int buflen)
-  {
-    static char _eyecatcher[] = "xfl_output()";
+  { static char _eyecatcher[] = "xfl_output()";
     int rc, xx;
     char  infobuff[256];
+int n;
 
     /* be sure we are on the output side of the connection            */
-    if ((pc->flag && XFL_OUTPUT) == 0) return -1;    //FIXME: get a better return code
-//return -615;
+    if ((pc->flag && XFL_OUTPUT) == 0)
+//    { xfl_error(61,0,NULL,"LIB");     /* provide specific report */
+      { printf("xfl_output: called for a non-output connector\n");
+        return -1; } // FIXME: get a better return code
 
 printf("xfl_output: '%s' %d %d\n",buffer,buflen,strlen(buffer));
 
-
-
-
-
-
-
-
-
-
-
+n = 0;
     while (1)
       {
-
-        rc = read(pc->fdr,infobuff,sizeof(infobuff));
-        if (rc < 0)
+n = n + 1;
+        /* the following is a blocking read; this routine waits until *
+         * the consumer side signals that it is ready to consume      */
+//      rc = read(pc->fdr,infobuff,sizeof(infobuff));
+        rc = 0; while (rc == 0)
+        rc = read(pc->fdr,infobuff,4);    /* expect 4 bytes by design */
+        if (rc < 4)
           { char *msgv[2], em[16];
-            rc = errno; if (rc = 0) rc = -1;
-            perror("output(): read():");       /* provide standard report */
+//          rc = errno; if (rc == 0) rc = -1;
+//          perror("output(): read():");       /* provide standard report */
             /* also throw a pipelines/ductwork/plenum error and bail out  */
             sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
             xfl_error(26,2,msgv,"LIB");         /* provide specific report */
+printf("xfl_output: error trying to read the control channel after %d %d\n",n,rc);
             return rc; }
         infobuff[rc] = 0x00;
 printf("xfl_output: infobuff = '%s'\n",infobuff);
@@ -613,27 +626,27 @@ printf("xfl_output: infobuff = '%s'\n",infobuff);
           {
             case 'S': case 's':                               /* STAT */
                 /* PROTOCOL: send the size of the record              */
-                sprintf(infobuff,"%d",buflen);
+                sprintf(infobuff,"%d",buflen);   /* say # bytes avail */
                 rc = write(pc->fdf,infobuff,strlen(infobuff));
                 break;
 
             case 'P': case 'p':                               /* PEEK */
                 /* PROTOCOL: send the record downstream               */
-                rc = write(pc->fdf,buffer,buflen);
+                rc = write(pc->fdf,buffer,buflen);   /* send the data */
                 break;
 
             case 'N': case 'n':                               /* NEXT */
                 /* PROTOCOL: acknowledge to consumer we unblocked     */
-                rc = write(pc->fdf,"OKAY",sizeof("OKAY"));
-//              rc = write(pc->fdf,"OKAY",strlen("OKAY")+1);
+//              rc = write(pc->fdf,"OKAY",4);
 // need to flag "done" here
+                rc = 0;
                 xx = 1;
                 break;
 
             case 'Q': case 'q':                               /* QUIT */
+printf("xfl_output: got a quit signal from the consumer\n");
                 /* PROTOCOL: consumer has signaled a sever            */
-                write(pc->fdf,"OKAY",sizeof("OKAY"));
-//              write(pc->fdf,"OKAY",strlen("OKAY")+1);
+//              write(pc->fdf,"OKAY",4);
                 close(pc->fdf);
                 close(pc->fdr);
                 rc = 0;
@@ -641,6 +654,7 @@ printf("xfl_output: infobuff = '%s'\n",infobuff);
                 break;
 
             default:
+printf("xfl_output: protocol error '%s'\n",infobuff);
 // need to indicate a protocol error here
                 rc = -1;
                 xx = 1;
@@ -649,29 +663,24 @@ printf("xfl_output: infobuff = '%s'\n",infobuff);
 
         if (rc < 0)
           { char *msgv[2], em[16];
-            rc = errno; if (rc = 0) rc = -1;
-            perror("xfl_peekto(): write():");         /* system report */
+            rc = errno; if (rc == 0) rc = -1;
+            perror("xfl_output(): write():");         /* system report */
             /* also throw a pipelines/ductwork/plenum error and bail  */
             sprintf(em,"%d",rc); msgv[1] = em;   /* integer to string */
             xfl_error(26,2,msgv,"LIB");     /* provide specific report */
+printf("xfl_output: error after protocol\n");
             return rc; }
 
         if (xx) break;
       }
 
-
-
     /* increment the record counter */
     pc->rn = pc->rn + 1;
 
-printf("xfl_output: (normal exit)\n");
+//printf("xfl_output: (normal exit)\n");
 
     return 0;
   }
-
-
-
-
 
 /* ---------------------------------------------------------------------
 NOT SURE THIS IS ACTUALLY NEEDED
