@@ -60,7 +60,7 @@ int main(int argc,char*argv[])
         if (rc < 0) break; /* else */ buflen = rc;
         buffer[buflen] = 0x00;      /* terminate the string for stdout */
 //printf("console: '%s' %d (input peeked)\n",buffer,rc);
-printf("\n>>>%s<<<\n\n",buffer);
+printf(">>>%s<<<\n",buffer);
 
 //      printf("%s\n",buffer);
 //      if (po != NULL)

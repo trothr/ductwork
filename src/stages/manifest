@@ -10,9 +10,10 @@
 
 ## Stage Sources that we Have Now
 
-    buffer.c
+    buffer.c            hold all records in memory until input closes
     console.c           read from stdin if first, write to stdout otherwise
     literal.c           prepend a record to the stream with the literal string supplied
+    strliteral.c        prepend a record to the stream with the literal string supplied
 
 ## Stages Defined in the Swift Implementation
 
@@ -40,6 +41,5 @@
     var.c
     xlate.c
     change.c
-    strliteral.c
 
 
