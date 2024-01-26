@@ -32,6 +32,7 @@ IBM Systems
 
 #define     XFL_INPUT   0x0001
 #define     XFL_OUTPUT  0x0002
+#define     XFL_KEEP    0x0010
 
 #define     XFL_MAX_STREAMS  16
 
@@ -62,6 +63,8 @@ char*xfl_argcat(int,char*[]);                   /* FKA xplcatargs     */
 
 int xfl_error(int,int,char**,char*);
 int xfl_pipepair(PIPECONN*[]);          /* allocate an in/out pair */
+
+int xfl_stagespawn(int,char*[],PIPECONN*[]);
 
 int xfl_stagestart(PIPECONN**);
 int xfl_peekto(PIPECONN*,void*,int);      /* pipeconn, buffer, buflen */

@@ -6,7 +6,12 @@
 #         Date: 2023-03-16 (Thu) and following
 #               2023-06-28 (Wed) added sub-project support
 #
-#               See end of the script for additional details.
+# This script attempts to perform the same function as 'configure'
+# as found in automake/autoconf packages, but is simpler.
+#
+#       Output: makefile
+#               configure.sh
+#               configure.h
 #
 
 cd `dirname "$0"`
@@ -30,7 +35,7 @@ while [ ! -z "$*" ] ; do
   shift
 done
 
-LOCDIR=$PREFIX/share/locale                                   # xmitmsgx
+LOCDIR=$PREFIX/share/locale                               # for xmitmsgx
 #
 US=`uname -s | sed 's#/##g'`
 UM=`uname -m | sed 's#^i.86$#i386#' | sed 's#^armv.l$#arm#'`
@@ -41,6 +46,10 @@ case "$US" in
     SHFLAGS="$LDFLAGS -shared"
     if [ "$US" = FreeBSD -a ! -d "$LOCDIR" -a -d /usr/share/nls ] ; then
                                           LOCDIR=/usr/share/nls ; fi
+#make a static library:
+# /usr/bin/ar qc libxmitmsgx.a CMakeFiles/xmitmsgx.dir/xmitmsgx.c.o
+# /usr/bin/ranlib libxmitmsgx.a
+# see also: CMAKE_SHARED_LINKER_FLAGS
     ;;
   CYGWIN*)
     US="CYGWIN"
@@ -58,6 +67,7 @@ case "$US" in
     ;;
 esac
 
+#examples:
 #/usr/share/locale/
 #/usr/lib/nls/msg/
 #/usr/share/nls/
@@ -78,7 +88,7 @@ cat makefile.in \
   | sed "s#%LOCDIR%#$LOCDIR#g" \
   > makefile
 
-# create configuration header file
+# create configuration header file and sourcable shell script
 rm -f configure.tmp
 echo "CFLAGS=#$CFLAGS#"   >> configure.tmp
 echo "PREFIX=#$PREFIX#"   >> configure.tmp
@@ -89,51 +99,16 @@ echo "LOCDIR=#$LOCDIR#"   >> configure.tmp                    # xmitmsgx
 sed 's/#/"/g' < configure.tmp | awk '{print "#define" , $0}' | sed 's/=/ /' > configure.h
 sed 's/#/"/g' < configure.tmp > configure.sh # chmod a+x configure.sh
 rm configure.tmp
+#define VERSION not needed
+#define LOCALE not needed
 
 # for each sub-project run the 'configure' script found there
 for F in */configure ; do
-    if [ -x $F ] ; then
+    if [ -x $F -a -f $F ] ; then
         echo "+ $F $A"
         $F $A ; fi
 done
 
 exit
-
-#
-# This script attempts to perform the same function as 'configure'
-# as found in automake/autoconf packages, but is simpler.
-#
-#       Output: makefile
-#               configure.sh
-#               configure.h
-#
-
-#
-# The following is from an older XMM configure script:
-#
-
-# create a header for C sources
-sed 's/#/"/g' < xmmconfig.tmp \
-  | awk '{print "#define" , $0}' > xmmconfig.h
-#define VERSION not needed
-#define LOCALE not needed
-
-# create a shell resource config file
-sed 's/#/"/g' < xmmconfig.tmp > xmmconfig.sh
-
-rm xmmconfig.tmp
-
-exit
-
-
-FreeBSD:
- make a shared library:
-  /usr/bin/cc -fPIC -shared -Wl,-soname,libxmitmsgxdyn.so -o libxmitmsgxdyn.so CMakeFiles/xmitmsgxdyn.dir/xmitmsgx.c.o
- make a static library:
-  /usr/bin/ar qc libxmitmsgx.a CMakeFiles/xmitmsgx.dir/xmitmsgx.c.o
-  /usr/bin/ranlib libxmitmsgx.a
-
-
-CMAKE_SHARED_LINKER_FLAGS
 
 

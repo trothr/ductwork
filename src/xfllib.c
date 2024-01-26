@@ -18,18 +18,19 @@
 #include "configure.h"
 
 #include <xmitmsgx.h>
-struct MSGSTRUCT xflmsgs;
+/* static */ struct MSGSTRUCT xflmsgs;
 char *xmmprefix = PREFIX;
 
 #include "xfl.h"
+/* static */ int xfl_version = XFL_VERSION;
+/* static */ struct PIPECONN *xfl_pipeconn = NULL;
 
 /* ---------------------------------------------------------------------
  *  This is a byte-at-a-time read function which attempts to consume
  *  a single line of text and no more.
  */
 ssize_t readl(int fd, void *buf, size_t count)
-  {
-    static char _eyecatcher[] = "readl()";
+  { static char _eyecatcher[] = "readl()";
     int i, rc;
     char *p;
 
@@ -59,8 +60,7 @@ ssize_t readl(int fd, void *buf, size_t count)
  *        directly from main() with supplied argc/argv as-is.
  */
 char*xfl_argcat(int argc,char*argv[])
-  {
-    static char _eyecatcher[] = "catargs()";
+  { static char _eyecatcher[] = "xfl_argcat()";
     int i, buflen;
     char *buffer, *p, *q;
 
@@ -115,8 +115,7 @@ int xfl_argcat(int argc,char*argv[],char**args)
 /* ---------------------------------------------------------------------
  */
 int xfl_error(int msgn,int msgc,char*msgv[],char*caller)
-  {
-    static char _eyecatcher[] = "xfl_error()";
+  { static char _eyecatcher[] = "xfl_error()";
     char msgbuf[256];
     int rc;
 
@@ -157,7 +156,7 @@ int xfl_error(int msgn,int msgc,char*msgv[],char*caller)
  * NOTE: this routine is destructive to the argument string supplied
  */
 int xfl_stageexec(char*args,PIPECONN*pc[])
-  {
+  { static char _eyecatcher[] = "xfl_stageexec()";
     int rc;
     char *verb, *argv[3], pipeconn[256], pipeprog[256], *p;
     PIPECONN *pi, *po;
@@ -169,7 +168,7 @@ int xfl_stageexec(char*args,PIPECONN*pc[])
     if (*args != 0x00) *args++ = 0x00;
 
 //printf("xfl_stageexec(): verb '%s'\n",verb);
-if (args != NULL && *args != 0x00)
+//if (args != NULL && *args != 0x00)
 //printf("xfl_stageexec(): args '%s'\n",args);
     argv[0] = verb;
     argv[1] = args;
@@ -197,9 +196,7 @@ if (args != NULL && *args != 0x00)
 
     sprintf(pipeprog,"stages/%s",verb);
     execv(pipeprog,argv);
-/*
-    execve(pipeprog,argv,NULL);
- */
+/*  execve(pipeprog,argv,NULL);                                       */
 
 
 
@@ -211,15 +208,14 @@ if (args != NULL && *args != 0x00)
  *   Called by: ...
  *       Calls: the stage indicated in argv[0]
  */
-int xfl_stagespawn(int argc,char*argv[],PIPECONN*pi[],PIPECONN*po[],PIPECONN*pk[])
+int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
   /* argc - count of arguments much like Unix/POSIX main()            */
   /* argv - argument array much like Unix/POSIX main()                */
-  /* pi   - pipe connector(s) this stage will use for input           */
-  /* po   - pipe connector(s) this stage will use for output          */
-  /* pk   - pipe connector(s) to kill-off before spawhing this stage  */
-  {
-    int rc, i;
+  /* pc   - pipe connector(s) this stage will use (input and output)  */
+  { static char _eyecatcher[] = "xfl_stagespawn()";
+    int rc, i, ii, io;
     char *p, *q, envbuf[8192], tmpbuf[256], pipepath[8192];
+    PIPECONN *px;
 
     rc = fork();
     if (rc < 0) return errno;       /* negative return code: an error */
@@ -227,51 +223,129 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pi[],PIPECONN*po[],PIPECONN*pk[
     /* FIXME: we should probably file that child PID for use later    */
     /* and finally, return code zero means we are the child process   */
 
-//  myname = NULL;
+//printf("xfl_stagespawn(%d,%s %s)\n",argc,argv[0],argv[1]);
+
     p = envbuf;
-
-    /* process input connectors */
-    i = 0; while (pi[i] != NULL)
-      { if (pi[i]->flag & XFL_OUTPUT)
+    /* process the supplied array of connectors */
+    i = ii = io = 0; while (pc[i] != NULL)
+      {
+        if (pc[i]->flag & XFL_INPUT)
+//      sprintf(tmpbuf,"*.INPUT.%d:%d,%d",ii++,pc[i]->fdf,pc[i]->fdr);
+        sprintf(tmpbuf,"*.INPUT:%d,%d",pc[i]->fdf,pc[i]->fdr);
+      else
+        if (pc[i]->flag & XFL_OUTPUT)
+//      sprintf(tmpbuf,"*.OUTPUT.%d:%d,%d",io++,pc[i]->fdf,pc[i]->fdr);
+        sprintf(tmpbuf,"*.OUTPUT:%d,%d",pc[i]->fdf,pc[i]->fdr);
+      else
 { printf("fail\n"); exit(1); }
-        sprintf(tmpbuf,"*.INPUT.%d:%d,%d",i,pi[i]->fdf,pi[i]->fdr);
 
         /* copy this token into the environment variable buffer       */
         q = tmpbuf;
-        while (*q != 0x00) *p++ = *q++; *p++ = ' ';                    }
+        while (*q != 0x00) *p++ = *q++; *p++ = ' ';
 
-    /* process output connectors */
-    i = 0; while (po[i] != NULL)
-      { if (po[i]->flag & XFL_INPUT)
-{ printf("fail\n"); exit(1); }
-        sprintf(tmpbuf,"*.OUTPUT.%d:%d,%d",i,po[i]->fdf,po[i]->fdr);
-
-        /* copy this token into the environment variable buffer       */
-        q = tmpbuf;
-        while (*q != 0x00) *p++ = *q++; *p++ = ' ';                    }
+        pc[i]->flag |= XFL_KEEP;
+        i++;
+      }
 
     /* prepare to pass connector info to the stage */
     *p = 0x00;                                /* terminate the string */
     setenv("PIPECONN",envbuf,1);
+//printf("xfl_stagespawn(): PIPECONN='%s'\n",envbuf);
+
+    px = xfl_pipeconn;
+    while (px != NULL)
+      {              /* close the connectors which the child will use */
+        if (px->flag & XFL_KEEP); else
+          {
+        close(px->fdf);
+        close(px->fdr);
+          }
+// step through connectors listed closing all *not* listed
+        px = px->next;
+      }
 
     /* scan PIPEPATH for the stage ($PREFIX/lib/stages) */
-    strncpy(pipepath,getenv("PIPEPATH"),sizeof(pipepath)-1);
-
-
+//  strncpy(pipepath,getenv("PIPEPATH"),sizeof(pipepath)-1);
+// need to implement pipe path search
 
     if (argc > 1) q = argv[1];
              else q = "";
-    sprintf(tmpbuf,"stages/%s %s&",argv[0],q);
+    sprintf(tmpbuf,"stages/%s %s",argv[0],q);
+//printf("xfl_stagespawn(): %s\n",tmpbuf);
     system(tmpbuf);
+
+sleep(7);
+exit(0);
 
     return 0;
   }
+
+/* ------------------------------------------------------------ PIPEPAIR
+ * Conceptually similar to POSIX pipe() function, returns two ends.
+ */
+int xfl_pipepair(PIPECONN*pp[])
+  { static char _eyecatcher[] = "xfl_pipepair()";
+    struct PIPECONN p0, *pi, *po;
+    int fdf[2], fdr[2];
+
+    /* we need *two* traditional POSIX/Unix pipes */
+    pipe(fdf);                  /* forward for data */
+    pipe(fdr);                  /* reverse for control */
+    /* FIXME: need to check for errors after these calls */
+
+    /* establish the side used for input */
+    pi = malloc(sizeof(p0));    /* pipeline input */
+    if (pi == NULL)
+      { char *msgv[2], em[16]; int en;
+        en = errno;    /* hold onto the error value in case it resets */
+        perror("xfl_pipepair(): malloc()");        /* standard report */
+        sprintf(em,"%d",en); msgv[1] = em;       /* integer to string */
+        xfl_error(26,2,msgv,"LIB");        /* provide specific report */
+        return en; }
+    pi->fdf /* read  */ = fdf[0]; /* data forward */
+    pi->fdr /* write */ = fdr[1]; /* control back */
+//printf("xfl_pipepair(): *.INPUT:%d,%d\n",pi->fdf,pi->fdr);
+    pi->flag = XFL_INPUT;
+
+    /* establish the side used for output */
+    po = malloc(sizeof(p0));    /* pipeline output */
+    if (po == NULL)
+      { char *msgv[2], em[16]; int en;
+        en = errno;    /* hold onto the error value in case it resets */
+        perror("xfl_pipepair(): malloc()");        /* standard report */
+        free(pi);     /* the other malloc() worked so free that block */
+        sprintf(em,"%d",en); msgv[1] = em;       /* integer to string */
+        xfl_error(26,2,msgv,"LIB");        /* provide specific report */
+        return en; }
+    po->fdf /* write */ = fdf[1]; /* data forward */
+    po->fdr /* read  */ = fdr[0]; /* control back */
+//printf("xfl_pipepair(): *.OUTPUT:%d,%d\n",po->fdf,po->fdr);
+    po->flag = XFL_OUTPUT;
+
+    /* cross-link these to each other and insert them into the chain  */
+    pi->next = po;                   /* first links forward to second */
+    pi->prev = NULL;                 /* and becomes new head-of-chain */
+    po->next = xfl_pipeconn;    /* second links forward to prior head */
+    po->prev = pi;                         /* and links back to first */
+    xfl_pipeconn = pi;    /* let anchor now point to first (new head) */
+
+    /* follow POSIX pipe() semantics: two plenum connectors           */
+    pp[0] = pi;                 /* [0] refers to the read end */
+    pp[1] = po;                 /* [1] refers to the write end */
+    /* see 'man 2 pipe' on most Unix or Linux systems for the idea    */
+
+    return 0;
+  }
+
+/* ------------------------------------------------------------------ */
+/* routines used by the stages follow                                 */
+/* ------------------------------------------------------------------ */
 
 /* ---------------------------------------------------------- STAGESTART
  * initialize the internal input and output connectors (two fd each)
  */
 int xfl_stagestart(PIPECONN**pc)
-  {
+  { static char _eyecatcher[] = "xfl_stagestart()";
     char *p, *pipeconn, number[16];
     struct PIPECONN pc0, *pc1, *pcp;
     int i;
@@ -320,14 +394,14 @@ int xfl_stagestart(PIPECONN**pc)
                 number[i] = *p++;
             number[i] = 0x00; pc0.fdr = atoi(number); }
 
-        pc0.next = NULL;
-        pc0.prev = *pc;
+        pc0.next = NULL;                                /* STAGESTART */
+        pc0.prev = *pc;                                 /* STAGESTART */
 
         /* allocate the connector struct for hand-off                 */
         pc1 = malloc(sizeof(pc0));
         // check for error
         if (*pc == NULL) *pc = pc1;
-              else pcp->next = pc1;
+              else pcp->next = pc1;                     /* STAGESTART */
         memcpy(pc1,&pc0,sizeof(pc0));
         pcp = pc1;
 
@@ -337,61 +411,11 @@ int xfl_stagestart(PIPECONN**pc)
     return 0;
   }
 
-/* ------------------------------------------------------------ PIPEPAIR
- * Conceptually similar to POSIX pipe() function, returns two ends.
- */
-int xfl_pipepair(PIPECONN*pp[])
-  {
-    struct PIPECONN p0, *pi, *po;
-    int fdf[2], fdr[2];
-
-    /* we need *two* traditional POSIX/Unix pipes */
-    pipe(fdf);                  /* forward for data */
-    pipe(fdr);                  /* reverse for control */
-    /* FIXME: need to check for errors after these calls */
-
-    /* establish the side used for input */
-    pi = malloc(sizeof(p0));    /* pipeline input */
-    if (pi == NULL)
-      { char *msgv[2], em[16]; int en;
-        en = errno;    /* hold onto the error value in case it resets */
-        perror("xfl_pipepair(): malloc()");        /* standard report */
-        sprintf(em,"%d",en); msgv[1] = em;       /* integer to string */
-        xfl_error(26,2,msgv,"LIB");        /* provide specific report */
-        return en; }
-    pi->fdf /* read  */ = fdf[0]; /* data forward */
-    pi->fdr /* write */ = fdr[1]; /* control back */
-//printf("xfl_pipepair(): *.INPUT:%d,%d\n",pi->fdf,pi->fdr);
-    pi->flag = XFL_INPUT;
-
-    /* establish the side used for output */
-    po = malloc(sizeof(p0));    /* pipeline output */
-    if (po == NULL)
-      { char *msgv[2], em[16]; int en;
-        en = errno;    /* hold onto the error value in case it resets */
-        perror("xfl_pipepair(): malloc()");        /* standard report */
-        free(pi);     /* the other malloc() worked so free that block */
-        sprintf(em,"%d",en); msgv[1] = em;       /* integer to string */
-        xfl_error(26,2,msgv,"LIB");        /* provide specific report */
-        return en; }
-    po->fdf /* write */ = fdf[1]; /* data forward */
-    po->fdr /* read  */ = fdr[0]; /* control back */
-//printf("xfl_pipepair(): *.OUTPUT:%d,%d\n",po->fdf,po->fdr);
-    po->flag = XFL_OUTPUT;
-
-    /* follow POSIX pipe() semantics: two plenum connectors           */
-    pp[0] = pi;                 /* [0] refers to the read end */
-    pp[1] = po;                 /* [1] refers to the write end */
-    /* see 'man 2 pipe' on most Unix or Linux systems for the idea    */
-
-    return 0;
-  }
-
 /* ----------------------------------------------------------- STAGEQUIT
  *  do an orderly close of the file descriptors and release of storage
  */
 int xfl_stagequit(PIPECONN*pc)
-  {
+  { static char _eyecatcher[] = "xfl_stagequit()";
     struct PIPECONN *pn;
 
 //printf("xfl_stagequit: hello\n");
@@ -409,7 +433,7 @@ int xfl_stagequit(PIPECONN*pc)
         close(pc->fdf); close(pc->fdr);
 
         /* proceed to next struct in the chain and free this one      */
-        pn = pc->next;
+        pn = pc->next;                                   /* STAGEQUIT */
         free(pc);
         pc = pn;
       }
@@ -461,11 +485,11 @@ int xfl_peekto(PIPECONN*pc,void*buffer,int buflen)
     rc = write(pc->fdr,"STAT",4);
     if (rc < 0)
       { char *msgv[2], em[16];
-        rc = errno; if (rc == 0) rc = -1;
+        rc = 0 - errno; if (rc == 0) rc = -1;
         perror("peekto(): write():");      /* provide standard report */
-        /* also throw a pipelines/ductwork/plenum error and bail out  */
-        sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
-        xfl_error(26,2,msgv,"LIB");         /* provide specific report */
+//      /* also throw a pipelines/ductwork/plenum error and bail out  */
+//      sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
+//      xfl_error(26,2,msgv,"LIB");         /* provide specific report */
         return rc; }
 //printf("xfl_peekto: sent STAT control %d\n",rc);
 
@@ -474,11 +498,11 @@ int xfl_peekto(PIPECONN*pc,void*buffer,int buflen)
     rc = read(pc->fdf,infobuff,sizeof(infobuff));
     if (rc < 0)
       { char *msgv[2], em[16];
-        rc = errno; if (rc == 0) rc = -1;
+        rc = 0 - errno; if (rc == 0) rc = -1;
         perror("peekto(): read():");       /* provide standard report */
-        /* also throw a pipelines/ductwork/plenum error and bail out  */
-        sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
-        xfl_error(26,2,msgv,"LIB");         /* provide specific report */
+//      /* also throw a pipelines/ductwork/plenum error and bail out  */
+//      sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
+//      xfl_error(26,2,msgv,"LIB");         /* provide specific report */
         return rc; }
     infobuff[rc] = 0x00;
 //printf("xfl_peekto: infobuff = '%s'\n",infobuff);
@@ -504,11 +528,11 @@ int xfl_peekto(PIPECONN*pc,void*buffer,int buflen)
     rc = write(pc->fdr,"PEEK",4);
     if (rc < 0)
       { char *msgv[2], em[16];
-        rc = errno; if (rc == 0) rc = -1;
+        rc = 0 - errno; if (rc == 0) rc = -1;
         perror("peekto(): write():");      /* provide standard report */
-        /* also throw a pipelines/ductwork/plenum error and bail out  */
-        sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
-        xfl_error(26,2,msgv,"LIB");         /* provide specific report */
+//      /* also throw a pipelines/ductwork/plenum error and bail out  */
+//      sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
+//      xfl_error(26,2,msgv,"LIB");         /* provide specific report */
         return rc; }
 //printf("xfl_peekto: sent PEEK; expecting %d bytes\n",reclen);
 
@@ -516,11 +540,11 @@ int xfl_peekto(PIPECONN*pc,void*buffer,int buflen)
     rc = read(pc->fdf,buffer,reclen);
     if (rc < 0)
       { char *msgv[2], em[16];
-        rc = errno; if (rc == 0) rc = -1;
+        rc = 0 - errno; if (rc == 0) rc = -1;
         perror("peekto(): read():");       /* provide standard report */
-        /* also throw a pipelines/ductwork/plenum error and bail out  */
-        sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
-        xfl_error(26,2,msgv,"LIB");         /* provide specific report */
+//      /* also throw a pipelines/ductwork/plenum error and bail out  */
+//      sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
+//      xfl_error(26,2,msgv,"LIB");         /* provide specific report */
         return rc; }
 
     return rc;
@@ -697,8 +721,7 @@ int xfl_parse(char*args,int*optc,char*optv[],char*rest)
  * Compare to abbrev() this version being *not* case sensitive.
  */
 int xfl_abbrevi(char*informat,char*info,int minlen)
-  {
-    static char _eyecatcher[] = "abbrevi()";
+  { static char _eyecatcher[] = "abbrevi()";
 
     int     i;
     for (i = 0; info[i] != 0x00; i++)
