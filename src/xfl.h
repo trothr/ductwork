@@ -47,17 +47,34 @@ typedef struct PIPECONN {
 //  char name[16];            /* name of connector for a named stream */
 //  int n;               /* number of connector for a numbered stream */
 
+    int pline, pstep;          /* which pipeline and which step/stage */
+    int cpid;             /* PID of child process which inherited FDs */
+
     int rn;   /* record number - how many records have been processed */
     /* This leads to 1-based indexing because when this is zero       */
     /* nothing has happened yet. So there is no "record zero".        */
 
     void *buff;        /* optional buffer for shared memory transfers */
-    void *glob;                /* global area */
+    void *glob;                                        /* global area */
     void *prev;                /* pointer to previous struct in chain */
     void *next;                /* pointer to next struct in the chain */
 
                         } PIPECONN;
 
+typedef struct PIPESTAGE {
+    char *text;                       /* string describing this stage */
+    int plinenumb;                  /* pipeline where this stage runs */
+    int stagenumb;                /* number of this stage in its line */
+    char *label;                          /* pointer to label, if any */
+    char *arg0;                          /* executable name or "verb" */
+    char *args;                                   /* arguments string */
+    int argc;
+    char **argv;
+    int  ipcc;                          /* input pipe connector count */
+    void *ipcv[16];              /* input pipe connector vector array */
+    int  opcc;                         /* output pipe connector count */
+    void *opcv[16];             /* output pipe connector vector array */
+                         } PIPESTAGE;
 
 char*xfl_argcat(int,char*[]);                   /* FKA xplcatargs     */
 

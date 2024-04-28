@@ -21,18 +21,23 @@ A="$*"
 PREFIX=/usr
 
 while [ ! -z "$*" ] ; do
-  case "$1" in
-    --prefix)
-      shift ; PREFIX="$1"
-      ;;
-    --prefix=*)
-      PREFIX=`echo "$1" | awk -F= '{print $2}'`
-      ;;
-    *)
-      echo "ignoring '$1'"
-      ;;
-  esac
-  shift
+    case "$1" in
+        --prefix=*|--prefi=*|--pref=*)
+            PREFIX=`echo "$1" | awk -F'=' '{print $2}'`
+            ;;
+        --prefix)
+            shift ; PREFIX="$1"
+            ;;
+        -*)
+            echo "$0: unrecognized option '$1'"
+            exit 24
+            ;;
+        *)
+            echo "$0: unrecognized argument '$1'"
+            exit 24
+            ;;
+    esac
+    shift
 done
 
 LOCDIR=$PREFIX/share/locale                               # for xmitmsgx
@@ -40,31 +45,35 @@ LOCDIR=$PREFIX/share/locale                               # for xmitmsgx
 US=`uname -s | sed 's#/##g'`
 UM=`uname -m | sed 's#^i.86$#i386#' | sed 's#^armv.l$#arm#'`
 case "$US" in
-  Linux|FreeBSD)
-    CFLAGS="$CFLAGS -fPIC"
-#   LDFLAGS=
-    SHFLAGS="$LDFLAGS -shared"
-    if [ "$US" = FreeBSD -a ! -d "$LOCDIR" -a -d /usr/share/nls ] ; then
-                                          LOCDIR=/usr/share/nls ; fi
+    Linux|FreeBSD)
+        CFLAGS="$CFLAGS -fPIC"
+#       LDFLAGS=
+        SHFLAGS="$LDFLAGS -shared"
+        if [ "$US" = FreeBSD -a ! -d "$LOCDIR" -a -d /usr/share/nls ] ; then
+                                              LOCDIR=/usr/share/nls ; fi
 #make a static library:
 # /usr/bin/ar qc libxmitmsgx.a CMakeFiles/xmitmsgx.dir/xmitmsgx.c.o
 # /usr/bin/ranlib libxmitmsgx.a
 # see also: CMAKE_SHARED_LINKER_FLAGS
     ;;
-  CYGWIN*)
-    US="CYGWIN"
-    SHFLAGS="$LDFLAGS -shared"
-    ;;
-  SunOS|AIX)
-    UM=`uname -p`
-    ;;
-  OS390)
-    UM="s390x" # guessing! since both "s390x" and "s390" are viable
-    CC="xlc"
-    LDFLAGS="-O -qxplink"
-    SHFLAGS="$LDFLAGS -qdll"
-    if [ -d /usr/lib/nls/msg ] ; then LOCDIR=/usr/lib/nls/msg ; fi
-    ;;
+    CYGWIN*)
+        US="CYGWIN"
+        SHFLAGS="$LDFLAGS -shared"
+        ;;
+    AIX)
+        UM=`uname -p`
+        ;;
+    Sun*|Sol*)
+        UM=`uname -p`
+        LIBS="-lsocket -lnsl"
+        ;;
+    OS390)
+        UM="s390x" # guessing! since both "s390x" and "s390" are viable
+        CC="xlc"
+        LDFLAGS="-O -qxplink"
+        SHFLAGS="$LDFLAGS -qdll"
+        if [ -d /usr/lib/nls/msg ] ; then LOCDIR=/usr/lib/nls/msg ; fi
+        ;;
 esac
 
 #examples:

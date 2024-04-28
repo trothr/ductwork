@@ -219,9 +219,15 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
 
     rc = fork();
     if (rc < 0) return errno;       /* negative return code: an error */
-    if (rc > 0) return 0;       /* positive return code: PID of child */
-    /* FIXME: we should probably file that child PID for use later    */
+    if (rc > 0) {               /* positive return code: PID of child */
+
+    /* process the supplied array of connectors */
+    i = 0; while (pc[i] != NULL) { pc[i]->cpid = rc; i++; }
+                return 0;
+                }
     /* and finally, return code zero means we are the child process   */
+
+/* -- at this point we are the child process ------------------------ */
 
 //printf("xfl_stagespawn(%d,%s %s)\n",argc,argv[0],argv[1]);
 
@@ -254,8 +260,9 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
 
     px = xfl_pipeconn;
     while (px != NULL)
-      {              /* close the connectors which the child will use */
+      {          /* close the connectors which the child will not use */
         if (px->flag & XFL_KEEP); else
+// if not previously closed ...
           {
         close(px->fdf);
         close(px->fdr);
