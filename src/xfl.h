@@ -74,12 +74,22 @@ typedef struct PIPESTAGE {
     void *ipcv[16];              /* input pipe connector vector array */
     int  opcc;                         /* output pipe connector count */
     void *opcv[16];             /* output pipe connector vector array */
+    int  xpcc;                                /* pipe connector count */
+    void *xpcv[16];                    /* pipe connector vector array */
+
+    int cpid;             /* PID of child process handling this stage */
+
+    void *prev;                /* pointer to previous struct in chain */
+    void *next;                /* pointer to next struct in the chain */
                          } PIPESTAGE;
+
+/* --- function prototypes ------------------------------------------ */
 
 char*xfl_argcat(int,char*[]);                   /* FKA xplcatargs     */
 
 int xfl_error(int,int,char**,char*);
 int xfl_pipepair(PIPECONN*[]);          /* allocate an in/out pair */
+int xfl_getpipepart(PIPESTAGE**,char*);
 
 int xfl_stagespawn(int,char*[],PIPECONN*[]);
 
@@ -97,5 +107,59 @@ int xfl_parse(char*,int*,char*[],char*);
 
 #define _XFLLIB_H
 #endif
+
+
+/*   discard    http://code.google.com/p/ductwork/                    */
+
+/********************************************************************************/
+
+int pipeline_streamstate(PIPECONN*);
+int pipeline_sever(PIPECONN*);
+int pipeline_addpipe();
+
+/*
+int     pipe(int *fd);
+int     poll(void *pollfds, long nfds, int timeout);
+ */
+
+/*
+
+consumer sends:
+"STAT" ** the only meta data at this point in the development
+          producer sends "DATA seq bytes", number of current record and how big
+
+consumer sends:
+"PEEK" ** think PIPLOCAT to examine a record
+          producer sends data
+
+consumer sends:
+"NEXT" ** think PIPINPUT (sort of) consume the record
+          producer sends data and advances the sequence count
+
+consumer sends:
+"QUIT" ** for SEVER operation
+          producer closes file descriptors
+          consumer closes file descriptors
+
+consumer sends:
+"FAIL" ** if something went wrong
+
+          consumer may also receive a "FAIL" from any of the above
+          as long as it is not misunderstood as data (like after STAT)
+
+ */
+
+/* error codes
+ -2756  Too many operands.
+ -2811  A stream with the stream identifier specified is already defined.
+ */
+
+/*
+labels
+                  A:   -- labels a stream
+                  A: | -- connects labeled stage to an input
+                | A:   -- connects labeled stage to an output
+                | A: | -- is illegal
+ */
 
 

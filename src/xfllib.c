@@ -24,6 +24,7 @@ char *xmmprefix = PREFIX;
 #include "xfl.h"
 /* static */ int xfl_version = XFL_VERSION;
 /* static */ struct PIPECONN *xfl_pipeconn = NULL;
+/* static */ struct PIPESTAGE *xfl_pipestage = NULL;
 
 /* ---------------------------------------------------------------------
  *  This is a byte-at-a-time read function which attempts to consume
@@ -97,20 +98,6 @@ char*xfl_argcat(int argc,char*argv[])
 
     return buffer;
   }
-
-#ifdef BYPASS
-int xfl_argcat(int argc,char*argv[],char**args)
-  {
-    int i, j;
-
-    /* first scan argv for lengths of all arguments */
-    j = 0;
-    for (i = 1; i < argc; i++) { j = j + strlen(argv[i]) + 1; }
-    /* then concatenate the arguments into one single string */
-    *args = NULL;
-    return 0;
-  }
-#endif
 
 /* ---------------------------------------------------------------------
  */
@@ -194,6 +181,7 @@ int xfl_stageexec(char*args,PIPECONN*pc[])
     setenv("PIPECONN",pipeconn,1);
 //system("sh -c set | grep PIPECONN");
 
+//printf("'stages/%s'\n",verb);
     sprintf(pipeprog,"stages/%s",verb);
     execv(pipeprog,argv);
 /*  execve(pipeprog,argv,NULL);                                       */
@@ -225,7 +213,7 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
     i = 0; while (pc[i] != NULL) { pc[i]->cpid = rc; i++; }
                 return 0;
                 }
-    /* and finally, return code zero means we are the child process   */
+    /* and finally, fork() returning zero means we are the child      */
 
 /* -- at this point we are the child process ------------------------ */
 
@@ -252,9 +240,9 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
         pc[i]->flag |= XFL_KEEP;
         i++;
       }
+    *p = 0x00;                                /* terminate the string */
 
     /* prepare to pass connector info to the stage */
-    *p = 0x00;                                /* terminate the string */
     setenv("PIPECONN",envbuf,1);
 //printf("xfl_stagespawn(): PIPECONN='%s'\n",envbuf);
 
@@ -277,6 +265,7 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
 
     if (argc > 1) q = argv[1];
              else q = "";
+//printf("'stages/%s'\n",argv[0]);
     sprintf(tmpbuf,"stages/%s %s",argv[0],q);
 //printf("xfl_stagespawn(): %s\n",tmpbuf);
     system(tmpbuf);
@@ -309,9 +298,9 @@ int xfl_pipepair(PIPECONN*pp[])
         sprintf(em,"%d",en); msgv[1] = em;       /* integer to string */
         xfl_error(26,2,msgv,"LIB");        /* provide specific report */
         return en; }
+
     pi->fdf /* read  */ = fdf[0]; /* data forward */
     pi->fdr /* write */ = fdr[1]; /* control back */
-//printf("xfl_pipepair(): *.INPUT:%d,%d\n",pi->fdf,pi->fdr);
     pi->flag = XFL_INPUT;
 
     /* establish the side used for output */
@@ -324,22 +313,75 @@ int xfl_pipepair(PIPECONN*pp[])
         sprintf(em,"%d",en); msgv[1] = em;       /* integer to string */
         xfl_error(26,2,msgv,"LIB");        /* provide specific report */
         return en; }
+
+
     po->fdf /* write */ = fdf[1]; /* data forward */
     po->fdr /* read  */ = fdr[0]; /* control back */
-//printf("xfl_pipepair(): *.OUTPUT:%d,%d\n",po->fdf,po->fdr);
     po->flag = XFL_OUTPUT;
 
     /* cross-link these to each other and insert them into the chain  */
-    pi->next = po;                   /* first links forward to second */
+    pi->next = po;                   /* input links forward to output */
     pi->prev = NULL;                 /* and becomes new head-of-chain */
-    po->next = xfl_pipeconn;    /* second links forward to prior head */
-    po->prev = pi;                         /* and links back to first */
-    xfl_pipeconn = pi;    /* let anchor now point to first (new head) */
+    po->next = xfl_pipeconn;    /* output links forward to prior head */
+    po->prev = pi;                     /* ... and links back to input */
+    xfl_pipeconn = pi;    /* let anchor now point to input (new head) */
+
 
     /* follow POSIX pipe() semantics: two plenum connectors           */
     pp[0] = pi;                 /* [0] refers to the read end */
     pp[1] = po;                 /* [1] refers to the write end */
     /* see 'man 2 pipe' on most Unix or Linux systems for the idea    */
+
+    return 0;
+  }
+
+/* ------------------------------------------------------------ PIPEPART
+ * This routine allocates a stage struct for "part" of this stream.   *
+ * The stage might have been previously allocated and labeled.        *
+ */
+int xfl_getpipepart(PIPESTAGE**ps,char*l)
+  { static char _eyecatcher[] = "xfl_getpipepart()";
+    struct PIPESTAGE ps0, *pst;
+
+        /* scan current chain-o-stages looking for the supplied label */
+    if (l != NULL && *l != 0x00)
+      {
+        pst = xfl_pipestage;
+        while (pst != NULL)
+          {
+            /* if this struct has the label then its the one we want  */
+            if(strcmp(pst->label,l) == 0) { *ps = pst; return 0; }
+
+            /* or if label does not match then skip to next-in-chain  */
+            pst = pst->next;
+          }
+      }
+
+
+    /* allocate the struct */
+    pst = malloc(sizeof(ps0));
+    if (pst == NULL)
+      { char *msgv[2], em[16]; int en;
+        en = errno;    /* hold onto the error value in case it resets */
+        perror("xfl_pipepart(): malloc()");        /* standard report */
+        sprintf(em,"%d",en); msgv[1] = em;       /* integer to string */
+        xfl_error(26,2,msgv,"LIB");        /* provide specific report */
+        return en; }
+
+    if (l != NULL && *l != 0x00)
+      {
+        printf("xfl_getpipepart(): oooo!! a labeled stage\n");
+        pst->label = l;               /* need to work on this! */
+      } else pst->label = "";
+
+    /* insert this stage struct into the chain of stages              */
+    pst->next = xfl_pipestage;   /* struct links forward to prior head */
+    pst->prev = NULL;                 /* and becomes new head-of-chain */
+
+//  if (pst != NULL) pst->prev = ps;         /* previous head now points to this stage */
+
+    xfl_pipestage = pst;
+    *ps = pst;
 
     return 0;
   }
