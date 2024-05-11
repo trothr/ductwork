@@ -63,19 +63,19 @@ typedef struct PIPECONN {
 
 typedef struct PIPESTAGE {
     char *text;                       /* string describing this stage */
-    int plinenumb;                  /* pipeline where this stage runs */
-    int stagenumb;                /* number of this stage in its line */
+//  int plinenumb;                  /* pipeline where this stage runs */
+//  int stagenumb;                /* number of this stage in its line */
     char *label;                          /* pointer to label, if any */
     char *arg0;                          /* executable name or "verb" */
     char *args;                                   /* arguments string */
-    int argc;
-    char **argv;
+//  int argc;
+//  char **argv;
     int  ipcc;                          /* input pipe connector count */
     void *ipcv[16];              /* input pipe connector vector array */
     int  opcc;                         /* output pipe connector count */
     void *opcv[16];             /* output pipe connector vector array */
-    int  xpcc;                                /* pipe connector count */
-    void *xpcv[16];                    /* pipe connector vector array */
+    int  xpcc;                         /* COMMON pipe connector count */
+    void *xpcv[16];             /* COMMON pipe connector vector array */
 
     int cpid;             /* PID of child process handling this stage */
 

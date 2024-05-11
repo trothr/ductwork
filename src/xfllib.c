@@ -26,6 +26,7 @@ char *xmmprefix = PREFIX;
 /* static */ struct PIPECONN *xfl_pipeconn = NULL;
 /* static */ struct PIPESTAGE *xfl_pipestage = NULL;
 
+
 /* ---------------------------------------------------------------------
  *  This is a byte-at-a-time read function which attempts to consume
  *  a single line of text and no more.
@@ -137,6 +138,7 @@ int xfl_error(int msgn,int msgc,char*msgv[],char*caller)
   }
 
 /* ----------------------------------------------------------- STAGEEXEC
+      DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED
  *   Called by: ...
  *       Calls: ...
  *
@@ -173,8 +175,8 @@ int xfl_stageexec(char*args,PIPECONN*pc[])
       }
     if (po != NULL)
       {
-//      printf("*.OUTPUT:%d,%d\n",po->fdf,po->fdr);
-        rc = sprintf(p,"*.OUTPUT:%d,%d ",po->fdf,po->fdr);
+        printf("*.OUTPUT:%d,%d\n",po->fdf,po->fdr);
+//      rc = sprintf(p,"*.OUTPUT:%d,%d ",po->fdf,po->fdr);
 //      if (rc < 0) ...
         p = &p[rc];
       }
@@ -185,9 +187,6 @@ int xfl_stageexec(char*args,PIPECONN*pc[])
     sprintf(pipeprog,"stages/%s",verb);
     execv(pipeprog,argv);
 /*  execve(pipeprog,argv,NULL);                                       */
-
-
-
 
     return 0;
   }
@@ -205,14 +204,13 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
     char *p, *q, envbuf[8192], tmpbuf[256], pipepath[8192];
     PIPECONN *px;
 
+    /* fork() is expensive but the most common and reliable way here  */
     rc = fork();
     if (rc < 0) return errno;       /* negative return code: an error */
     if (rc > 0) {               /* positive return code: PID of child */
-
-    /* process the supplied array of connectors */
-    i = 0; while (pc[i] != NULL) { pc[i]->cpid = rc; i++; }
-                return 0;
-                }
+                          /* process the supplied array of connectors */
+                  i = 0; while (pc[i] != NULL) { pc[i]->cpid = rc; i++; }
+                  return 0; }
     /* and finally, fork() returning zero means we are the child      */
 
 /* -- at this point we are the child process ------------------------ */
@@ -225,11 +223,11 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
       {
         if (pc[i]->flag & XFL_INPUT)
 //      sprintf(tmpbuf,"*.INPUT.%d:%d,%d",ii++,pc[i]->fdf,pc[i]->fdr);
-        sprintf(tmpbuf,"*.INPUT:%d,%d",pc[i]->fdf,pc[i]->fdr);
+                sprintf(tmpbuf,"*.INPUT:%d,%d",pc[i]->fdf,pc[i]->fdr);
       else
         if (pc[i]->flag & XFL_OUTPUT)
 //      sprintf(tmpbuf,"*.OUTPUT.%d:%d,%d",io++,pc[i]->fdf,pc[i]->fdr);
-        sprintf(tmpbuf,"*.OUTPUT:%d,%d",pc[i]->fdf,pc[i]->fdr);
+                sprintf(tmpbuf,"*.OUTPUT:%d,%d",pc[i]->fdf,pc[i]->fdr);
       else
 { printf("fail\n"); exit(1); }
 
@@ -243,8 +241,8 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
     *p = 0x00;                                /* terminate the string */
 
     /* prepare to pass connector info to the stage */
-    setenv("PIPECONN",envbuf,1);
 //printf("xfl_stagespawn(): PIPECONN='%s'\n",envbuf);
+    setenv("PIPECONN",envbuf,1);
 
     px = xfl_pipeconn;
     while (px != NULL)
@@ -338,25 +336,33 @@ int xfl_pipepair(PIPECONN*pp[])
 /* ------------------------------------------------------------ PIPEPART
  * This routine allocates a stage struct for "part" of this stream.   *
  * The stage might have been previously allocated and labeled.        *
+ *       Calls:
  */
 int xfl_getpipepart(PIPESTAGE**ps,char*l)
   { static char _eyecatcher[] = "xfl_getpipepart()";
     struct PIPESTAGE ps0, *pst;
 
-        /* scan current chain-o-stages looking for the supplied label */
+    /* scan current chain-o-stages looking for the supplied label     */
     if (l != NULL && *l != 0x00)
       {
         pst = xfl_pipestage;
         while (pst != NULL)
           {
+            char *m;
+            m = pst->label;
+            if (m == NULL) m = "";
             /* if this struct has the label then its the one we want  */
-            if(strcmp(pst->label,l) == 0) { *ps = pst; return 0; }
+            if(strcmp(m,l) == 0)
+              {
+printf("xfl_getpipepart(): re-using '%s'\n",l);
+                *ps = pst;
+                return 0;
+              }
 
             /* or if label does not match then skip to next-in-chain  */
             pst = pst->next;
           }
       }
-
 
     /* allocate the struct */
     pst = malloc(sizeof(ps0));
@@ -368,21 +374,23 @@ int xfl_getpipepart(PIPESTAGE**ps,char*l)
         xfl_error(26,2,msgv,"LIB");        /* provide specific report */
         return en; }
 
-    if (l != NULL && *l != 0x00)
-      {
-        printf("xfl_getpipepart(): oooo!! a labeled stage\n");
-        pst->label = l;               /* need to work on this! */
-      } else pst->label = "";
+    if (l != NULL && *l != 0x00) pst->label = l; else pst->label = NULL;
 
     /* insert this stage struct into the chain of stages              */
-    pst->next = xfl_pipestage;   /* struct links forward to prior head */
-    pst->prev = NULL;                 /* and becomes new head-of-chain */
+    pst->next = xfl_pipestage;  /* struct links forward to prior head */
+    pst->prev = NULL;                /* and becomes new head-of-chain */
 
-//  if (pst != NULL) pst->prev = ps;         /* previous head now points to this stage */
+    /* set some defaults */
+    pst->arg0 = NULL;                    /* executable name or "verb" */
+    pst->args = NULL;                             /* arguments string */
+    pst->ipcc = 0;                      /* input pipe connector count */
+    pst->opcc = 0;                     /* output pipe connector count */
+    pst->xpcc = 0;                     /* COMMON pipe connector count */
+    pst->cpid = -1;       /* PID of child process handling this stage */
 
-    xfl_pipestage = pst;
+//  xfl_pipestage->prev = pst;       /* prev head points back to this */
+    xfl_pipestage = pst;              /* and this one gets the anchor */
     *ps = pst;
-
     return 0;
   }
 

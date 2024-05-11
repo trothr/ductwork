@@ -21,7 +21,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#include <xpllib.h>
+#include <xfl.h>
 
 /* -- this struct is only used in this program for the time being --- */
 typedef struct PLINE {
@@ -31,6 +31,7 @@ typedef struct PLINE {
     void *prev;                /* pointer to previous struct in chain */
     void *next;                /* pointer to next struct in the chain */
                      } PLINE;
+/* -- above will be removed or will be added to xfl.h                 */
 
 /* -- this struct is only used in this program for the time being --- */
 typedef struct STAGE {
@@ -46,6 +47,7 @@ typedef struct STAGE {
           /* this array is intentionally limited to "verb" and "args" */
     struct PIPECONN *pc;            /* first in a chain of connectors */
                      } STAGE;
+/* -- above will be removed or will be added to xfl.h                 */
 
 /* one pipeline with one stage:
 Ready;
