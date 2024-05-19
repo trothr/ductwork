@@ -1,12 +1,15 @@
 # Stages
 
-
+This is the stages source code directory for POSIX Pipelines
 
 ## Manifest
 
-    manifest            this file
+    manifest            this file (see counterpart one level up)
     configure           configurator script
     makefile.in         skeleton makefile
+    makefile            generated
+    configure.h         generated
+    configure.sh        generated
 
 ## Stage Sources that we Have Now
 
@@ -14,16 +17,23 @@
     console.c           read from stdin if first, write to stdout otherwise
     literal.c           prepend a record to the stream with the literal string supplied
     strliteral.c        prepend a record to the stream with the literal string supplied
+    fanin.c
+    command.c
+
+## Developmental, not delivered with the package
+
+    brace.c                     development
+    readtext1.c                 development
+    readtext2.c                 development
+    readtext.c                  development
 
 ## Stages Defined in the Swift Implementation
 
-    command.c
     count.c
     diskr.c
     diskw.c
     diskwa.c
     drop.c
-    fanin.c
     faninany.c
     fanout.c
     help.c

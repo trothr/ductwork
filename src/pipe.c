@@ -1,7 +1,8 @@
 /*
  *
+ *        Name: pipe.c (C program source)
  *        (C program source)
- *        Date: week of VM Workshop
+ *        Date: week of the VM Workshop and I don't remember which year
  *
  *
  *
@@ -14,14 +15,97 @@
  * - run all stages and wait for completion
  */
 
-
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <errno.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include <xfl.h>
+
+int main(int argc,char*argv[])
+  {
+    char *arg0;
+
+    char *escape, *endchar, *stagesep, *pipename;   /* separator */
+
+    /* inherit defaults established by parent or by the user */
+    escape = getenv("PIPEOPT_ESCAPE");             /* default is none */
+    if (escape == NULL)                                     escape = "";
+    endchar = getenv("PIPEOPT_ENDCHAR");           /* default is none */
+    if (endchar == NULL)                                   endchar = "";
+    stagesep = getenv("PIPEOPT_SEPARATOR");         /* default is bar */
+    if (stagesep == NULL || *stagesep == 0x00)           stagesep = "|";
+
+    /* remeober argv[0] for use later */
+    arg0 = argv[0];
+//printf("argv[0]='%s'\n",arg0);
+printf("argc=%d\n",argc);
+
+    while (argc > 1 && *argv[1] == '-')
+      {
+        if (strcmp(argv[1],"--escape") == 0)                /* ESCAPE */
+          { if (argc < 3) { printf("error\n"); return 1; }
+            escape = argv[2]; argc--; argv++; } else
+        if (strcmp(argv[1],"--endchar") == 0)              /* ENDCHAR */
+          { if (argc < 3) { printf("error\n"); return 1; }
+            endchar = argv[2]; argc--; argv++; } else
+        if (strcmp(argv[1],"--stagesep") == 0)            /* STAGESEP */
+          { if (argc < 3) { printf("error\n"); return 1; }
+            stagesep = argv[2]; argc--; argv++; } else
+        if (strcmp(argv[1],"--separator") == 0)          /* SEPARATOR */
+          { if (argc < 3) { printf("error\n"); return 1; }
+            stagesep = argv[2]; argc--; argv++; } else
+        if (strcmp(argv[1],"--name") == 0)                    /* NAME */
+          { if (argc < 3) { printf("error\n"); return 1; }
+            pipename = argv[2]; argc--; argv++; } else
+printf("BOGUS OPTION %s\n",argv[1]);
+        argc--; argv++;
+      }
+
+    /* string-up all arguments into one */
+    args = xfl_argcat(argc,argv);             /* must eventually free */
+    if (args == NULL) /* error, then */ return 1;
+
+    /* if we have CMS-style options then process them here and now    */
+    if (*p == '(')
+      {
+        p++;
+        while (1)
+          {
+            while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
+
+            if (strcmp(p,"ESCAPE",3) == 0)                  /* ESCAPE */
+              { while (*p != ' ' || *p == '\t' && *p != 0x00) p++;
+                while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
+                escape = p; } else
+            if (strncmp(p,"ENDCHAR",3) == 0)               /* ENDCHAR */
+              { while (*p != ' ' || *p == '\t' && *p != 0x00) p++;
+                while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
+                endchar = p; } else
+            if (strncmp(p,"STAGESEP",2) == 0)             /* STAGESEP */
+              { while (*p != ' ' || *p == '\t' && *p != 0x00) p++;
+                while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
+                stagesep = p; } else
+
+...
+
+           }
+      }
+
+printf("escape='%s'\n",escape);   /* FIXME: --escape/ESCAPE should be xorc */
+printf("endchar='%s'\n",endchar);   /* FIXME: --endchar/ENDCHAR should be xorc */
+printf("separator='%s'\n",stagesep);   /* FIXME: --stagesep/STAGESEP should be xorc */
+printf("argc=%d\n",argc);
+
+    return 0;
+  }
+
+
+#ifdef OLDSTUFF
+
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+
 
 /* -- this struct is only used in this program for the time being --- */
 typedef struct PLINE {
@@ -249,12 +333,12 @@ printf("pipe literal real pipeline | console\n");
     sargv[0] = "literal";
     sargv[1] = "real pipeline";
     sargc = 2;
-    xplstagespawn(sargc,sargv,pc[1],pc[0]);   /* first stage writes to #1 */
+//  xplstagespawn(sargc,sargv,pc[1],pc[0]);   /* first stage writes to #1 */
 
     sargv[0] = "console";
     sargv[1] = "";
     sargc = 2;
-    xplstagespawn(sargc,sargv,pc[0],pc[1]);   /* second stage reads from #0 */
+//  xplstagespawn(sargc,sargv,pc[0],pc[1]);   /* second stage reads from #0 */
 
 //<<<<<
 
@@ -274,5 +358,7 @@ printf("\n");
 
     return 0;
   }
+
+#endif
 
 

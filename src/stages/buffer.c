@@ -10,6 +10,9 @@
 
 #include <stdio.h>
 
+/* development: the following is for sleep() */
+#include <unistd.h>
+
 #include <xfl.h>
 
 /* ------------------------------------------------------------------ */
@@ -19,10 +22,8 @@ int main()
 
 //  struct  recinmem { void  *addr;  int size; };
     int i, buflen, rc;
-    char buffer[4096], *p, *q, *args;
+    char buffer[4096];
     struct PIPECONN *pc, *pi, *po, *pn;
-
-//printf("buffer: (starting)\n");
 
     /* initialize this stage                                          */
     rc = xfl_stagestart(&pc);
@@ -31,18 +32,16 @@ int main()
     /* snag the first input stream and the first output stream        */
     pi = po = NULL;
     for (pn = pc; pn != NULL; pn = pn->next)
-      { if (pn->flag & XFL_OUTPUT) { if (po == NULL) po = pn; }
-        if (pn->flag & XFL_INPUT)  { if (pi == NULL) pi = pn; } }
+      { if (pn->flag & XFL_F_OUTPUT) { if (po == NULL) po = pn; }
+        if (pn->flag & XFL_F_INPUT)  { if (pi == NULL) pi = pn; } }
 
     /* FIXME: provide an error message "no output stream */
     if (pi == NULL)
       { xfl_error(61,0,NULL,"BUF");        /* provide specific report */
         return 1; }
-//printf("buffer: YES input is connected\n");
     if (po == NULL)
       { xfl_error(61,0,NULL,"BUF");        /* provide specific report */
         return 1; }
-//printf("buffer: YES output is connected\n");
 
     /* start with an index offset of zero */
 //  i = 0;
@@ -59,20 +58,17 @@ int main()
         buflen = sizeof(buffer) - 1;
         rc = xfl_peekto(pi,buffer,buflen);            /* sip on input */
         if (rc < 0) break; /* else */ buflen = rc;
-//printf("buffer: got a record\n");
 
         /* write the record to our primary output stream              */
         rc = xfl_output(po,buffer,buflen);      /* send it downstream */
         if (rc < 0) break;
-//printf("buffer: sent that record downstream\n");
 
         /* now consume the record from the input stream               */
         rc = xfl_readto(pi,NULL,0);   /* consume record after sending */
         if (rc < 0) break;
-//printf("buffer: consumed the record\n");
 
         /* bump up the index to the next record */
-        i++;
+//      i++;
 
       }
 
@@ -89,11 +85,12 @@ int main()
 //      (void) free(recinmem.addr[j]);
 //    }
 
+//printf("buffer: normal termination\n");
     /* terminate this stage cleanly                                   */
     rc = xfl_stagequit(pc);
     if (rc < 0) return 1;
 
-//printf("buffer: (normal exit)\n");
+//sleep(1);
 
     /* pass a "success" return code to our caller */
     return 0;

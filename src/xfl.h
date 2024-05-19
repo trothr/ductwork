@@ -5,10 +5,8 @@
  *
  *
 
-**
-
 From: Nancy Foley <nfoley@us.ibm.com>
-To: "rmt@casita.net" <rmt@casita.net>
+To: Rick Troth <rmt@casita.net>
 Subject: Prefix Request
 Date: Wed, 26 Jul 2023 14:37:20 +0000
 
@@ -30,9 +28,13 @@ IBM Systems
 #define  XFL_VERSION  (((0) << 24) + ((7) << 16) + ((6) << 8) + (0))
 //static int xfl_version = XFL_VERSION;
 
-#define     XFL_INPUT   0x0001
-#define     XFL_OUTPUT  0x0002
-#define     XFL_KEEP    0x0010
+#define     XFL_F_INPUT         0x0001
+#define     XFL_F_OUTPUT        0x0002
+#define     XFL_F_KEEP          0x0010
+#define     XFL_F_SEVERED       0x0020  /* possible EPIPE */
+
+#define     XFL_E_NONE          0
+#define     XFL_E_SEVERED       12
 
 #define     XFL_MAX_STREAMS  16
 
@@ -44,8 +46,8 @@ typedef struct PIPECONN {
                  /* control goes "upstream" from consumer to producer */
     int flag;   /* which side of the connection, producer or consumer */
 
-//  char name[16];            /* name of connector for a named stream */
-//  int n;               /* number of connector for a numbered stream */
+    char name[16];            /* name of connector for a named stream */
+    int n;               /* number of connector for a numbered stream */
 
     int pline, pstep;          /* which pipeline and which step/stage */
     int cpid;             /* PID of child process which inherited FDs */
@@ -93,17 +95,13 @@ int xfl_getpipepart(PIPESTAGE**,char*);
 
 int xfl_stagespawn(int,char*[],PIPECONN*[]);
 
-int xfl_stagestart(PIPECONN**);
+int xfl_stagestart(PIPECONN**);           /* returns a pipeconn array */
 int xfl_peekto(PIPECONN*,void*,int);      /* pipeconn, buffer, buflen */
 int xfl_readto(PIPECONN*,void*,int);      /* pipeconn, buffer, buflen */
 int xfl_output(PIPECONN*,void*,int);      /* pipeconn, buffer, buflen */
-int xfl_stagequit(PIPECONN*);
+int xfl_stagequit(PIPECONN*);          /* releases the pipeconn array */
+int xfl_sever(PIPECONN*);                   /* disconnect a connector */
 
-/* the following are still in development */
-int xfl_stageexec(char*,PIPECONN*[]);
-int xplstagespawn(int,char*[],PIPECONN*[],PIPECONN*[],PIPECONN*[]);
-
-int xfl_parse(char*,int*,char*[],char*);
 
 #define _XFLLIB_H
 #endif

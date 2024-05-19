@@ -11,6 +11,9 @@
 
 #include <stdio.h>
 
+/* development: the following is for sleep() */
+#include <unistd.h>
+
 #include <xfl.h>
 
 /* ------------------------------------------------------------------ */
@@ -33,8 +36,8 @@ int main(int argc,char*argv[])
     /* snag the first input stream and the first output stream        */
     pi = po = NULL;
     for (pn = pc; pn != NULL; pn = pn->next)
-      { if (pn->flag & XFL_OUTPUT) { if (po == NULL) po = pn; }
-        if (pn->flag & XFL_INPUT)  { if (pi == NULL) pi = pn; } }
+      { if (pn->flag & XFL_F_OUTPUT) { if (po == NULL) po = pn; }
+        if (pn->flag & XFL_F_INPUT)  { if (pi == NULL) pi = pn; } }
 
     /* if pi is null then we are a first stage so slurp stdin         */
     if (pi == NULL && po == NULL)
@@ -60,9 +63,9 @@ int main(int argc,char*argv[])
         if (rc < 0) break; /* else */ buflen = rc;
         buffer[buflen] = 0x00;      /* terminate the string for stdout */
 //printf("console: '%s' %d (input peeked)\n",buffer,rc);
-printf(">>>%s<<<\n",buffer);
+//printf(">>>%s<<<\n",buffer);
 
-//      printf("%s\n",buffer);
+        printf("%s\n",buffer);
 //      if (po != NULL)
 //      rc = xfl_output(po,buffer,buflen);       /* send it downstream */
 //      if (rc < 0) break;
@@ -72,11 +75,15 @@ printf(">>>%s<<<\n",buffer);
       }
     if (rc < 0) return 1;
 
+//sleep(13);
+
     /* terminate this stage cleanly                                   */
     rc = xfl_stagequit(pc);
     if (rc < 0) return 1;
 
 //printf("console: (normal exit)\n");
+
+sleep(3);
 
     return 0;
   }

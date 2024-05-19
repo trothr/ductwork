@@ -17,8 +17,7 @@
 
 /* ------------------------------------------------------------------ */
 int main(int argc,char*argv[])
-  {
-    static char _eyecatcher[] = "pipeline stage 'strliteral' main()";
+  { static char _eyecatcher[] = "pipeline stage 'strliteral' main()";
 
     int i, buflen, rc, argl;
     char buffer[4096], *args, *argp, delim, *argq;
@@ -44,15 +43,13 @@ int main(int argc,char*argv[])
     /* snag the first input stream and the first output stream        */
     pi = po = NULL;
     for (pn = pc; pn != NULL; pn = pn->next)
-      { if (pn->flag & XFL_OUTPUT) { if (po == NULL) po = pn; }
-        if (pn->flag & XFL_INPUT)  { if (pi == NULL) pi = pn; } }
+      { if (pn->flag & XFL_F_OUTPUT) { if (po == NULL) po = pn; }
+        if (pn->flag & XFL_F_INPUT)  { if (pi == NULL) pi = pn; } }
 
     /* FIXME: provide an error message "no output stream */
     if (po == NULL)
-      {
-        xfl_error(61,0,NULL,"LIT");        /* provide specific report */
-        return 1;
-      }
+      { xfl_error(61,0,NULL,"LIT");        /* provide specific report */
+        return 1; }
 
     /* write the literal string to our primary output stream          */
     argl = strlen(argq);
@@ -61,8 +58,8 @@ int main(int argc,char*argv[])
 
     /* proper behavior: once we have written the literal to the       *
      * output, we then copy all input records, if any, to the output  */
-    if (pi != NULL) while (1) {
-
+    if (pi != NULL) while (1)
+      {
         /* perform a PEEKTO and see if there is a record ready        */
         buflen = sizeof(buffer) - 1;
         rc = xfl_peekto(pi,buffer,buflen);            /* sip on input */
