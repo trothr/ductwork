@@ -32,6 +32,14 @@ This is the source directory for XFL, POSIX Pipelines
     stages/buffer.c             BUFFER stage holds all records until end-of-input
     stages/fanin.c
 
+# Rexx support
+
+    xflrexx.c                   Rexx interface shim
+    xflrexx.rx                  sample stage written in Rexx
+    xflrexx.sh                  shell script to set environmentals and run the sample
+
+# development
+
         ductwork.c              development, deprecated
         notes.txt               development
         plenum.c                development

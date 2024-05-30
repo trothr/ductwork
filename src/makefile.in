@@ -7,23 +7,34 @@
 #
 #
 
-PROJECTURL      =       http://www.casita.net/pub/ductwork
-DELIVERABLES    =       libxfl.a libxmitmsgx.a
+APPLID          =       ductwork
+VERSION         =       2.1.4
 
-E               =       
-O               =       .o
+PROJECTURL      =       http://www.casita.net/pub/ductwork/src
+LOCALE          =       en_US
+
+##### configuration #####
+
+PREFIX          =       %PREFIX%
+CFLAGS          =       %CFLAGS% -DPREFIX=\"$(PREFIX)\"
+LDFLAGS         =       %LDFLAGS%
+SHFLAGS         =       %SHFLAGS%
+# we may later use CC, CXX, CPP, CPPFLAGS, and/or CXXFLAGS
+
+EXE             =       
+OBJ             =       .o
 LIB             =       .a
 DLL             =       .so
-XOBJECTS        =       pipe$E
-LOBJECTS        =       ductwork$O stringup$O
-INCLUDES        =       ductwork.h
-LIBRARIES       =       libductwork$(LIB)
 
 CFLAGS          =       %CFLAGS% -I.
 PREFIX          =       %PREFIX%
 LDFLAGS         =       %LDFLAGS% -L. -lxfl -lxmitmsgx
 SHFLAGS         =       %SHFLAGS%
 # we may later use CC, CXX, CPP, CPPFLAGS, and/or CXXFLAGS
+
+##### configuration #####
+
+DELIVERABLES    =       pipe$(EXE) libxfl$(LIB) libxmitmsgx$(LIB)
 
 MKAR            =       $(AR) r
 
@@ -32,9 +43,9 @@ MKAR            =       $(AR) r
                 libraries
 
 # first target serves as the default, but name it that way anyway
-_default:	$(DELIVERABLES)
+_default:       $(DELIVERABLES)
 
-all:		$(DELIVERABLES)
+all:            $(DELIVERABLES)
 
 # pseudo target to build static and shared libraries
 libraries:      libxfl$(LIB) libxfl$(DLL)
@@ -60,17 +71,17 @@ xfllib.c:
 #
 xfllib.o:       xfllib.c xfl.h
 		@echo "$(MAKE): compiling the library ..."
-		$(CC) $(CFLAGS) -o xfllib$O -c xfllib.c
+		$(CC) $(CFLAGS) -o xfllib.o -c xfllib.c
 
 #
-libxfl$(LIB):   xfllib$O
+libxfl$(LIB):   xfllib.o
 		@echo "$(MAKE): building the library ..."
 		@rm -f libxfl$(LIB)
-		$(MKAR) libxfl$(LIB) xfllib$O
+		$(MKAR) libxfl$(LIB) xfllib.o
 
 #
-libxfl$(DLL):   xfllib$O
-		$(CC) $(LDFLAGS) -shared -o libxfl$(DLL) xfllib$O
+libxfl$(DLL):   xfllib.o
+		$(CC) $(LDFLAGS) -shared -o libxfl$(DLL) xfllib.o
 
 
 #
@@ -89,7 +100,15 @@ libxmitmsgx$(LIB):
 		cp -p xmitmsgx/libxmitmsgx$(LIB) .
 
 
+########################################################################
+# Rexx support
+rexx:           libxflrexx.so
 
+xflrexx.o:      makefile xflrexx.c xfl.h
+		$(CC) $(CFLAGS) -o xflrexx.o -c xflrexx.c
+
+libxflrexx.so:  xflrexx.o xmitmsgx.o
+		$(CC) $(LDFLAGS) -shared -o libxflrexx.so xflrexx.o xfllib.o xmitmsgx.o
 
 
 #
