@@ -21,9 +21,7 @@
 
 /* ------------------------------------------------------------------ */
 int main()
-  {
-    static char _eyecatcher[] = "pipeline stage 'fanin' main()";
-
+  { static char _eyecatcher[] = "pipeline stage 'fanin' main()";
     int buflen, rc;
     char buffer[4096];
     struct PIPECONN *pc, *pi, *po, *pn;
@@ -35,9 +33,6 @@ printf("fanin: (starting)\n");
     /* initialize this stage                                          */
     rc = xfl_stagestart(&pc);
     if (rc < 0) return 1;
-
-
-
 
     /* snag the primary output stream (scanning all connectors)       */
     po = NULL;

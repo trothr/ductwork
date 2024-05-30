@@ -1,6 +1,5 @@
 /*
  *
- *
  *        Name: filer.c (C program source)
  *              Ductwork FILER stage (file read)
  *        Date: 2024-05-20 (Mon) taking a break from Rexx development
@@ -30,7 +29,6 @@ int main(int argc,char*argv[])
     /* string-up the command line arguments                           */
     args = xfl_argcat(argc,argv);
     if (args == NULL) return 1;
-//args = "testfile";
 
     /* take the first blank-delimited word as the name of the file    */
     p = args;
@@ -51,12 +49,11 @@ int main(int argc,char*argv[])
       { if (pn->flag & XFL_F_OUTPUT) { if (po == NULL) po = pn; }
         if (pn->flag & XFL_F_INPUT)  { if (pi == NULL) pi = pn; } }
 
-    /* FIXME: provide an error message "no output stream" */
-    if (po == NULL)
-      { xfl_error(61,0,NULL,"FIO");        /* provide specific report */
-        return 1; }
+    /* check here that output is connected, else 61 "no output"       */
+    if (po == NULL) { xfl_error(61,0,NULL,"FIO"); return 1; }
 
-    /* possibly check here that input is *not* connected */
+    /* possibly check here that input is *not* connected, else 87     */
+    if (pi != NULL) { xfl_error(87,0,NULL,"FIO"); return 1; }
 
 /*
       i == index .. offset into buffer

@@ -18,7 +18,6 @@
 /* ------------------------------------------------------------------ */
 int main(int argc,char*argv[])
   { static char _eyecatcher[] = "pipeline stage 'strliteral' main()";
-
     int i, buflen, rc, argl;
     char buffer[4096], *args, *argp, delim, *argq;
     struct PIPECONN *pc, *pi, *po, *pn;
