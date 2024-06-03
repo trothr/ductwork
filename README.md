@@ -5,6 +5,8 @@ a utility for flow-based programming
 Ductwork provides on POSIX systems the same functionality
 as CMS/TSO Pipelines provides on IBM mainframe systems CMS and TSO.
 
+An alternate name for the project is "[plenum](plenum.md)".
+
 ## Goals
 
 Goals of the Ductwork project:
@@ -35,8 +37,8 @@ providing the same basic functionality as that of of CMS/TSO Pipelines,
 but in a POSIX environment where IBM VM/CMS and IBM MVS/TSO are not available.
 
 Ductwork is compatible, as much as is possible, with CMS Pipelines
-at the command-line level.  Dispatching is handled by the underlying
-operating system (Unix, Linux, Windows).  The difference in dispatching
+at the command-line level. Dispatching is handled by the underlying
+operating system (Unix, Linux, Windows). The difference in dispatching
 is a major functional difference between Ductwork and CMS Pipelines.
 
 Ductwork accepts traditional Unix style options (with dashes)
@@ -81,7 +83,11 @@ https://en.wikipedia.org/wiki/CMS_Pipelines
 
 ## Additional Links
 
+http://trothtech.us/pipelines
+
 http://www.casita.net/pub/ductwork/
+
+http://www.casita.net/pub/plenum/
 
 http://vm.marist.edu/~pipeline/
 
