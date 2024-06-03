@@ -12,13 +12,14 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <xfl.h>
 
 int main(int argc,char*argv[])
   { static char _eyecatcher[] = "pipeline stage 'filer' main()";
     int rc, fd, buflen, i, j, k, l;
-    char *args, *fn, *p, *q, *r, buffer[4096];
+    char *args, *fn, *p, *q, *r, buffer[4096], *msgv[16];
     struct PIPECONN *pc, *pi, *po, *pn;
 
     /* initialize this stage                                          */
@@ -40,8 +41,17 @@ int main(int argc,char*argv[])
 
     /* open the named file for reading                                */
     rc = fd = open(fn,O_RDONLY);
-    if (rc < 0) {
-      printf("filer: open() returned %d\n",rc); return 1; }
+    if (rc < 0)
+      { char em[16]; int en;
+        en = errno;    /* hold onto the error value in case it resets */
+        perror("filer(): open()");   /* provide standard Unix report */
+        /* 0699 E Return code &1 from &2 (file: &3) */
+        sprintf(em,"%d",en); msgv[1] = em;       /* integer to string */
+        msgv[2] = "open()";
+        msgv[3] = fn;
+        xfl_error(699,4,msgv,"FIO");       /* provide specific report */
+        return -1;
+      }
 
     /* snag the first input stream and the first output stream        */
     pi = po = NULL;
@@ -49,10 +59,10 @@ int main(int argc,char*argv[])
       { if (pn->flag & XFL_F_OUTPUT) { if (po == NULL) po = pn; }
         if (pn->flag & XFL_F_INPUT)  { if (pi == NULL) pi = pn; } }
 
-    /* check here that output is connected, else 61 "no output"       */
+    /* 0061 E Output specification missing, "no output"               */
     if (po == NULL) { xfl_error(61,0,NULL,"FIO"); return 1; }
 
-    /* possibly check here that input is *not* connected, else 87     */
+    /* 0087 E This stage must be the first stage of a pipeline        */
     if (pi != NULL) { xfl_error(87,0,NULL,"FIO"); return 1; }
 
 /*

@@ -17,6 +17,8 @@
 
 #include <signal.h>
 
+#include <syslog.h>
+
 #include "configure.h"
 
 #include <xmitmsgx.h>
@@ -85,7 +87,7 @@ char*xfl_argcat(int argc,char*argv[])
     /* allocate a buffer to hold the combined tokens as one string    */
     buffer = malloc(buflen);
 
-    if (buffer == NULL)
+    if (buffer == NULL)          /* 0026 E Error &1 obtaining storage */
       { char *msgv[2], em[16]; int en;
         en = errno;    /* hold onto the error value in case it resets */
         perror("argcat(): malloc()");      /* provide standard report */
@@ -107,7 +109,8 @@ char*xfl_argcat(int argc,char*argv[])
     return buffer;
   }
 
-/* ---------------------------------------------------------------------
+/* --------------------------------------------------------------- ERROR
+ *  Report an error (including some non-errors) using formal messages.
  */
 int xfl_error(int msgn,int msgc,char*msgv[],char*caller)
   { static char _eyecatcher[] = "xfl_error()";
@@ -117,7 +120,7 @@ int xfl_error(int msgn,int msgc,char*msgv[],char*caller)
     rc = xmopen("xfl",0,&xflmsgs);
 
     /* some functions indicate the error with a negative number       */
-    if (msgn < 0) msgn = 0 - msgn;
+    if (msgn < 0) msgn = 0 - msgn;   /* force message number positive */
 
     /* populate the message struct - some of this is outside the API  */
     xflmsgs.msgnum = msgn;
@@ -126,13 +129,13 @@ int xfl_error(int msgn,int msgc,char*msgv[],char*caller)
     xflmsgs.msgbuf = msgbuf;
     xflmsgs.msglen = sizeof(msgbuf) - 1;
 
-    /* do we need these? */
+    /* do we need this? */
     xflmsgs.msglevel = 0;
 
     /* using pfxmaj and pfxmin is definitely outside the XMITMSGX API */
     strncpy(xflmsgs.pfxmaj,"XFL",4);
     strncpy(xflmsgs.pfxmin,caller,4);
-    /* also remember to up-case that */
+    /* also remember to up-case the latter */
 
     /* make the message */
     rc = xmmake(&xflmsgs);
@@ -144,10 +147,48 @@ int xfl_error(int msgn,int msgc,char*msgv[],char*caller)
     return 0;
   }
 
+/* --------------------------------------------------------------- TRACE
+ *  Similar to xfl_error() but for debugging and tracing.
+ */
+int xfl_trace(int msgn,int msgc,char*msgv[],char*caller)
+  { static char _eyecatcher[] = "xfl_trace()";
+    char msgbuf[256];
+    int rc;
+
+    rc = xmopen("xfl",0,&xflmsgs);
+
+    /* some functions indicate the error with a negative number       */
+    if (msgn < 0) msgn = 0 - msgn;   /* force message number positive */
+
+    /* populate the message struct - some of this is outside the API  */
+    xflmsgs.msgnum = msgn;
+    xflmsgs.msgc = msgc;
+    xflmsgs.msgv = (unsigned char**) msgv;
+    xflmsgs.msgbuf = msgbuf;
+    xflmsgs.msglen = sizeof(msgbuf) - 1;
+
+    /* do we need this? */
+    xflmsgs.msglevel = 0;
+
+    /* using pfxmaj and pfxmin is definitely outside the XMITMSGX API */
+    strncpy(xflmsgs.pfxmaj,"XFL",4);
+    strncpy(xflmsgs.pfxmin,caller,4);
+    /* also remember to up-case the latter */
+
+    /* make the message */
+    rc = xmmake(&xflmsgs);
+    if (rc != 0) return rc;
+
+    /* log it */
+    syslog(LOG_DEBUG,"%s",msgbuf);
+
+    return 0;
+  }
+
 /* ----------------------------------------------------------- STAGEEXEC
       DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED
- *   Called by: ...
  *       Calls: ...
+ *   Called by: ...
  *
  * NOTE: this routine is destructive to the argument string supplied
  */
@@ -196,8 +237,8 @@ int xfl_stageexec(char*args,PIPECONN*pc[])
   }
 
 /* ---------------------------------------------------------- STAGESPAWN
- *   Called by: ...
  *       Calls: the stage indicated in argv[0]
+ *   Called by: launcher
  */
 int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
   /* argc - count of arguments much like Unix/POSIX main()            */
@@ -208,32 +249,18 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
     char *p, *q, envbuf[8192], tmpbuf[256], pipepath[8192];
     PIPECONN *px;
 
-    /* fork() is expensive but the most common and reliable way here  */
-    rc = fork();
-    if (rc < 0) return errno;       /* negative return code: an error */
-    if (rc > 0) {               /* positive return code: PID of child */
-                          /* process the supplied array of connectors */
-                  i = 0; while (pc[i] != NULL) { pc[i]->cpid = rc; i++; }
-                  return 0; }
-    /* and finally, fork() returning zero means we are the child      */
-
-/* -- at this point we are the child process ------------------------ */
-
-//printf("xfl_stagespawn(%d,%s %s)\n",argc,argv[0],argv[1]);
-
     p = envbuf;
     /* process the supplied array of connectors */
     i = ii = io = 0; while (pc[i] != NULL)
       {
         if (pc[i]->flag & XFL_F_INPUT)
         sprintf(tmpbuf,"*.INPUT.%d:%d,%d",ii++,pc[i]->fdf,pc[i]->fdr);
-//              sprintf(tmpbuf,"*.INPUT:%d,%d",pc[i]->fdf,pc[i]->fdr);
       else
         if (pc[i]->flag & XFL_F_OUTPUT)
         sprintf(tmpbuf,"*.OUTPUT.%d:%d,%d",io++,pc[i]->fdf,pc[i]->fdr);
-//              sprintf(tmpbuf,"*.OUTPUT:%d,%d",pc[i]->fdf,pc[i]->fdr);
       else
-{ printf("fail\n"); exit(1); }
+// 0100    E Direction "&1" not input or output
+{ printf("fail\n"); return -1; }
 
         /* copy this token into the environment variable buffer       */
         q = tmpbuf;
@@ -244,8 +271,23 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
       }
     *p = 0x00;                                /* terminate the string */
 
+    /* fork() is expensive but the most common and reliable way here  */
+    rc = fork();
+    if (rc < 0) return errno;       /* negative return code: an error */
+    if (rc > 0) {               /* positive return code: PID of child */
+                          /* process the supplied array of connectors */
+                  i = 0; while (pc[i] != NULL) { pc[i]->cpid = rc; i++;
+// also un-do                                    pc[i]->flag -= XFL_F_KEEP;
+//                                          sever(pc[i]);
+ }
+                  return 0; }
+    /* and finally, fork() returning zero means we are the child      */
+
+/* -- at this point we are the child process ------------------------ */
+
+//printf("xfl_stagespawn(%d,%s %s)\n",argc,argv[0],argv[1]);
+
     /* prepare to pass connector info to the stage */
-//printf("xfl_stagespawn(): PIPECONN='%s'\n",envbuf);
     setenv("PIPECONN",envbuf,1);
 
     px = xfl_pipeconn;
@@ -256,6 +298,7 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
           {
         close(px->fdf);
         close(px->fdr);
+// or maybe sever(px);
           }
 // step through connectors listed closing all *not* listed
         px = px->next;
@@ -274,7 +317,7 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
 //sleep(7);
 exit(0);
 
-    return 0;
+//  return 0;       NO!!
   }
 
 /* ------------------------------------------------------------ PIPEPAIR
@@ -340,6 +383,7 @@ int xfl_pipepair(PIPECONN*pp[])
  * This routine allocates a stage struct for "part" of this stream.   *
  * The stage might have been previously allocated and labeled.        *
  *       Calls:
+ *   Called by: launcher
  */
 int xfl_getpipepart(PIPESTAGE**ps,char*l)
   { static char _eyecatcher[] = "xfl_getpipepart()";
@@ -357,8 +401,8 @@ int xfl_getpipepart(PIPESTAGE**ps,char*l)
             /* if this struct has the label then its the one we want  */
             if(strcmp(m,l) == 0)
               {
-printf("xfl_getpipepart(): re-using '%s'\n",l);
-printf("xfl_getpipepart(): arg0 '%s' args '%s'\n",pst->arg0,pst->args);
+printf("xfl_getpipepart(): re-using '%s'\n",l);         // 3047
+printf("xfl_getpipepart(): arg0 '%s' args '%s'\n",pst->arg0,pst->args);   // 3027
                 *ps = pst;
                 return 0;
               }
@@ -410,6 +454,8 @@ int xfl_stagestart(PIPECONN**pc)
     char *p, *pipeconn, number[16];
     struct PIPECONN pc0, *pc1, *pcp;
     int i, n;
+
+//  openlog(const char *ident, int option, int facility);
 
     *pc = NULL;
     pcp = NULL;
@@ -507,6 +553,8 @@ int xfl_stagequit(PIPECONN*pc)
         pc = pn;
       }
 
+//  closelog();
+
     return 0;
   }
 
@@ -525,7 +573,7 @@ int xfl_peekto(PIPECONN*pc,void*buffer,int buflen)
 
     /* be sure we are on the input side of the connection             */
     if ((pc->flag & XFL_F_INPUT) == 0)
-      { printf("xfl_peekto: called for a non-input connector\n");
+      { fprintf(stderr,"xfl_peekto: called for a non-input connector\n");
         return -1; }  //FIXME: get a better return code
 //printf("peekto: okay but bailing out for development\n");
 //return -614;
@@ -640,7 +688,7 @@ int xfl_readto(PIPECONN*pc,void*buffer,int buflen)
 
     /* be sure we are on the input side of the connection             */
     if ((pc->flag & XFL_F_INPUT) == 0)
-      { printf("xfl_readto: called for a non-input connector\n");
+      { fprintf(stderr,"xfl_readto: called for a non-input connector\n");
         return -1; } // FIXME: get a better return code
 
     /* if the connection was severed then return XFL_E_SEVERED (12)   */
@@ -702,8 +750,8 @@ int n;
 
     /* be sure we are on the output side of the connection            */
     if ((pc->flag & XFL_F_OUTPUT) == 0)
-//    { xfl_error(61,0,NULL,"LIB");        /* provide specific report */
-      { printf("xfl_output: called for a non-output connector\n");
+//    { xfl_error(100,0,NULL,"LIB");       /* provide specific report */
+      { fprintf(stderr,"xfl_output: called for a non-output connector\n");
         return -1; } // FIXME: get a better return code
 
     /* if the connection was severed then return XFL_E_SEVERED (12)   */

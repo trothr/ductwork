@@ -1,0 +1,83 @@
+#!/usr/bin/env regina
+/*
+ *        Name: rxsample (Rexx script)
+ *              demonstrate POSIX Pipelines (XFL) called from Rexx
+ *        Date: 2024-05-19 (Sun) happy 60th MEN
+ *
+ *        Note: This is a sample Pipelines stage written in Rexx.
+ *              The interface uses the rc + rs return value style
+ *              made popular by Rexx/Sockets. That allows returning both
+ *              code and text without needing supplemental variables.
+ *
+ *              The sample flow here is peekto/output/readto.
+ *              The affect of this stage on the data is no change.
+ *
+ */
+
+/* what platform are we running on? do we need to load the functions? */
+Parse Source sys . fn .
+If sys = "CMS" Then nl = '15'x
+Else Do
+  Parse Value RxFuncAdd('xfl','xflrexx','RxDuctwork') With rc rs
+  If rc <> 0 Then Signal LoadFailed
+  nl = '0A'x
+End
+
+/* announce the sample program */
+Say "POSIX Pipelines demonstration stage in Rexx"
+
+/* the "VERSION" subfunction can be called at any time w/w/o INIT     */
+Parse Value xfl("VERSION") With rc rs
+If rc <> 0 Then Signal CallFailed
+If rs <> "" Then Say rs
+
+/* initialize the stage logic */
+Parse Value xfl("INIT") with rc rs
+If rc <> 0 Then Signal CallFailed
+/* If rs <> "" Then Say rs */
+
+ic = 0; oc = 0; bc = 0
+Do Forever
+
+    Parse Value xfl("PEEKTO",0) with rc rs
+    If rc = 12 Then Leave
+    If rc <> 0 Then Signal CallFailed
+    record = rs
+    ic = ic + 1; bc = bc + Length(record)
+
+    Parse Value xfl("OUTPUT",0,record) with rc rs
+    If rs <> "" Then Say rs
+    If rc = 12 Then Leave
+    If rc <> 0 Then Signal CallFailed
+    oc = oc + 1
+
+    Parse Value xfl("READTO",0) with rc rs
+    If rc = 12 Then Leave
+    If rc <> 0 Then Signal CallFailed
+
+End /* Do Forever */
+
+/* do an orderly shutdown of the library */
+Parse Value xfl("QUIT") with rc rs
+If rc <> 0 Then Signal CallFailed
+If rs <> "" Then Say rs
+
+Say "input records" ic "/ output records" oc "/ bytes" bc
+
+Exit
+
+/* ---------------------------------------------------------------------
+ */
+LoadFailed:
+Say "### load failed! RC =" rc "###"
+If rs <> "" Then Say "###" rs "###"
+Exit rc
+
+/* ---------------------------------------------------------------------
+ */
+CallFailed:
+Say "### call failed! RC =" rc "###"
+If rs <> "" Then Say "###" rs "###"
+Exit rc
+
+

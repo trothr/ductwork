@@ -29,6 +29,7 @@ int main(int argc,char*argv[])
     /* string-up the command line arguments                           */
     args = xfl_argcat(argc,argv);
     if (args == NULL) /* there was an error, then */ return 1;
+//printf("locate: argstring '%s'\n",args);
 
     /* find the needle in the arg string */
     p = args;
@@ -37,8 +38,7 @@ int main(int argc,char*argv[])
     q = needle = p;
     while (*q != 0x00 && *q != '/') q++;
     if (*q == '/') *q = 0x00;
-needle = "test";
-printf("locate: needle '%s'\n",needle);
+//printf("locate: needle '%s'\n",needle);
 
 
     /* snag the first input stream and the first two output streams   */
@@ -50,7 +50,7 @@ printf("locate: needle '%s'\n",needle);
     for (       ; pn != NULL && pos == NULL; pn = pn->next)
       { if (pn->flag & XFL_F_OUTPUT) pos = pn; }
 
-printf("locate: %08X %08X %08X\n",pi,pop,pos);
+//printf("locate: %08X %08X %08X\n",pi,pop,pos);
 
 
     while (1)

@@ -3,28 +3,14 @@
  *        Name: xfl.h (C program header)
  *        Date: 2023-06-12 (Mon) roughly, 2024-01-07 (Sun)
  *
+ * Prefix XFL* has been assigned to the Ductwork/Plenum project by IBM.
+ * Please keep IBM informed so that they can update the prefix database.
  *
-
-From: Nancy Foley <nfoley@us.ibm.com>
-To: Rick Troth <rmt@casita.net>
-Subject: Prefix Request
-Date: Wed, 26 Jul 2023 14:37:20 +0000
-
-Prefix XFL* has been assigned to you and your product.
-If/when you have a product number assigned, please let me know
-so that I may update the prefix database accordingly. Thanks.
-
-Nancy J. Foley
-element@us.ibm.com
-IBM C-S 0-2043-003
-zStack Custom Build, Software Operations
-IBM Systems
-
  */
 
 #ifndef _XFLLIB_H
 
-//static char *_ductwork_version = "Ductwork 0.7.6";
+//static char *_xfl_version = "XFL 0.7.6";
 #define  XFL_VERSION  (((0) << 24) + ((7) << 16) + ((6) << 8) + (0))
 //static int xfl_version = XFL_VERSION;
 
@@ -72,8 +58,8 @@ typedef struct PIPECONN {
 
 typedef struct PIPESTAGE {
     char *text;                       /* string describing this stage */
-//  int plinenumb;                  /* pipeline where this stage runs */
-//  int stagenumb;                /* number of this stage in its line */
+//  int plinenumb;              /* pipeline where this stage runs N/A */
+//  int stagenumb;            /* number of this stage in its line N/A */
     char *label;                          /* pointer to label, if any */
     char *arg0;                          /* executable name or "verb" */
     char *args;                                   /* arguments string */
@@ -94,7 +80,7 @@ typedef struct PIPESTAGE {
 
 /* --- function prototypes ------------------------------------------ */
 
-char*xfl_argcat(int,char*[]);                   /* FKA xplcatargs     */
+char*xfl_argcat(int,char*[]);     /* gather argc/argv into one string */
 
 int xfl_error(int,int,char**,char*);      /* msgn, msgc, msgv, caller */
 int xfl_trace(int,int,char**,char*);      /* msgn, msgc, msgv, caller */
@@ -140,14 +126,6 @@ consumer sends:
           consumer may also receive a "FAIL" from any of the above
           as long as it is not misunderstood as data (like after STAT)
 
- */
-
-/*
-labels
-                  A:   -- labels a stream
-                  A: | -- connects labeled stage to an input
-                | A:   -- connects labeled stage to an output
-                | A: | -- is illegal
  */
 
 

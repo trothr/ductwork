@@ -12,13 +12,14 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <xfl.h>
 
 int main(int argc,char*argv[])
   { static char _eyecatcher[] = "pipeline stage 'filew' main()";
     int rc, fd, buflen;
-    char *args, *fn, buffer[4096], *p, *q;
+    char *args, *fn, buffer[4096], *p, *q, *msgv[16];
     struct PIPECONN *pc, *pi, *po, *pn;
 
     /* initialize this stage                                          */
@@ -38,10 +39,19 @@ int main(int argc,char*argv[])
     if (*q != 0x00) *q = 0x00;
     fn = p;
 
-    /* open the named file for reading                                */
+    /* open the named file for writing                                */
     rc = fd = open(fn,O_WRONLY|O_CREAT|O_TRUNC,0666);
-    if (rc < 0) {
-      printf("filew: open() returned %d\n",rc); return 1; }
+    if (rc < 0)
+      { char em[16]; int en;
+        en = errno;    /* hold onto the error value in case it resets */
+        perror("filew(): open()");   /* provide standard Unix report */
+        /* 0699 E Return code &1 from &2 (file: &3) */
+        sprintf(em,"%d",en); msgv[1] = em;       /* integer to string */
+        msgv[2] = "open()";
+        msgv[3] = fn;
+        xfl_error(699,4,msgv,"FIO");       /* provide specific report */
+        return -1;
+      }
 
     /* snag the first input stream and the first output stream        */
     pi = po = NULL;
@@ -49,10 +59,11 @@ int main(int argc,char*argv[])
       { if (pn->flag & XFL_F_OUTPUT) { if (po == NULL) po = pn; }
         if (pn->flag & XFL_F_INPUT)  { if (pi == NULL) pi = pn; } }
 
-    /* FIXME: provide an error message "no input stream" */
-    if (pi == NULL)
-      { xfl_error(61,0,NULL,"FIO");        /* provide specific report */
-        return 1; }
+    /* 0061 E Output specification missing, "no output"               */
+    if (po == NULL) { xfl_error(61,0,NULL,"FIO"); return 1; }
+
+    /* 0127 E This stage cannot be first in a pipeline                */
+    if (pi == NULL) { xfl_error(127,0,NULL,"FIO"); return 1; }
 
     while (1)
       {

@@ -1,17 +1,17 @@
 /*
  *
  *        Name: pipe.c (C program source)
- *        (C program source)
+ *              This is called the "launcher" because "dispatcher" is
+ *              not the right term. On POSIX systems, we rely on the
+ *              operating system kernel to do the actual dispatching.
  *        Date: week of the VM Workshop and I don't remember which year
- *
- *
  *
  * The logic is as follows:
  * - process Unix-style options as individual argv elements
  * - concatenate remaining argv elements into a single string
  * - process CMS-style options which apply to the whole pipeline
- * - parse-out individual pipelines (if endchar is set)
  * - parse-out individual stages
+ * - parse-out individual pipelines (if endchar is set)
  * - run all stages and wait for completion
  */
 
@@ -23,9 +23,12 @@
 
 int main(int argc,char*argv[])
   {
-    char *arg0;
-
+    int rc, i, nullokay;
+    char *arg0, *args, *p;
     char *escape, *endchar, *stagesep, *pipename;   /* separator */
+    char *msgv[2];
+
+    nullokay = 0;            /* null pipeline is *not* initially okay */
 
     /* inherit defaults established by parent or by the user */
     escape = getenv("PIPEOPT_ESCAPE");             /* default is none */
@@ -38,10 +41,21 @@ int main(int argc,char*argv[])
     /* remeober argv[0] for use later */
     arg0 = argv[0];
 //printf("argv[0]='%s'\n",arg0);
-printf("argc=%d\n",argc);
+//printf("argc=%d\n",argc);
 
     while (argc > 1 && *argv[1] == '-')
       {
+        if (strcmp(argv[1],"--version") == 0)              /* VERSION */
+          { int xfl_version = XFL_VERSION;
+            int vv, rr, mm;
+            char verstr[16];
+            vv = (xfl_version >> 24) & 0xff;   /* extract the version */
+            rr = (xfl_version >> 16) & 0xff;   /* extract the release */
+            mm = (xfl_version >> 8) & 0xff;  /* extract the mod level */
+            sprintf(verstr,"%d.%d.%d",vv,rr,mm);
+            msgv[1] = verstr;
+            xfl_error(86,2,msgv,"PIP");    /* provide specific report */
+            nullokay = 1; } else
         if (strcmp(argv[1],"--escape") == 0)                /* ESCAPE */
           { if (argc < 3) { printf("error\n"); return 1; }
             escape = argv[2]; argc--; argv++; } else
@@ -57,13 +71,23 @@ printf("argc=%d\n",argc);
         if (strcmp(argv[1],"--name") == 0)                    /* NAME */
           { if (argc < 3) { printf("error\n"); return 1; }
             pipename = argv[2]; argc--; argv++; } else
-printf("BOGUS OPTION %s\n",argv[1]);
+
+          { /* 0014 E Option &1 not valid */
+//printf("BOGUS OPTION %s\n",argv[1]);
+            msgv[1] = argv[1];
+            xfl_error(14,2,msgv,"PIP"); /* 0014 E Option &1 not valid */
+            return 1; }
+
         argc--; argv++;
       }
 
     /* string-up all arguments into one */
+printf("argc=%d\n",argc);
     args = xfl_argcat(argc,argv);             /* must eventually free */
     if (args == NULL) /* error, then */ return 1;
+
+    p = args;
+    while (*p != ' ' && *p != 0x00) p++;
 
     /* if we have CMS-style options then process them here and now    */
     if (*p == '(')
@@ -73,7 +97,7 @@ printf("BOGUS OPTION %s\n",argv[1]);
           {
             while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
 
-            if (strcmp(p,"ESCAPE",3) == 0)                  /* ESCAPE */
+            if (strncmp(p,"ESCAPE",3) == 0)                 /* ESCAPE */
               { while (*p != ' ' || *p == '\t' && *p != 0x00) p++;
                 while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
                 escape = p; } else
@@ -85,10 +109,19 @@ printf("BOGUS OPTION %s\n",argv[1]);
               { while (*p != ' ' || *p == '\t' && *p != 0x00) p++;
                 while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
                 stagesep = p; } else
+            if (strncmp(p,"NAME",1) == 0)                     /* NAME */
+              { while (*p != ' ' || *p == '\t' && *p != 0x00) p++;
+                while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
+                stagesep = p; } else
 
-...
+              { /* 0014 E Option &1 not valid */
+//printf("BOGUS OPTION %s\n",argv[1]);
+                msgv[1] = argv[1];
+                xfl_error(14,2,msgv,"PIP");    /* Option &1 not valid */
+                return 1; }
 
-           }
+            argc--; argv++;
+          }
       }
 
 printf("escape='%s'\n",escape);   /* FIXME: --escape/ESCAPE should be xorc */
@@ -96,9 +129,49 @@ printf("endchar='%s'\n",endchar);   /* FIXME: --endchar/ENDCHAR should be xorc *
 printf("separator='%s'\n",stagesep);   /* FIXME: --stagesep/STAGESEP should be xorc */
 printf("argc=%d\n",argc);
 
+printf("args='%s'\n",args);
+    if (*p == 0x00)   /* if empty string then we have a null pipeline */
+      {
+        if (nullokay) return 0;
+        xfl_error(12,2,msgv,"PIP");           /* 0012 E Null pipeline */
+        return 1; 
+      }
+
+/*
+int xfl_trace(int,int,char**,char*);
+int xfl_pipepair(PIPECONN*[]);
+int xfl_getpipepart(PIPESTAGE**,char*);
+int xfl_stagespawn(int,char*[],PIPECONN*[]);
+ */
+
+    free(args);
+
     return 0;
   }
 
+/*
+label logic
+                  A:   -- labels a stream
+                  A: | -- connects labeled stage to an input
+                | A:   -- connects labeled stage to an output
+                | A: | -- is illegal
+ */
+
+/* one pipeline with one stage:
+Ready;
+pipe foofum
+            msgv[1] = "FOOFUM";
+            xfl_error(27,2,msgv,"PIP"); 0027 E Entry point &1 not found
+FPLSCB027E Entry point FOOFUM not found
+            msgv[1] = "1";
+            msgv[2] = "1";
+            xfl_error(3,3,msgv,"PIP"); 0003 I ... Issued from stage &1 of pipeline &2
+FPLSCA003I ... Issued from stage 1 of pipeline 1
+            msgv[1] = "foofum";
+            xfl_error(1,2,msgv,"PIP"); 0001 I ... Running "&1"
+FPLSCA001I ... Running "foofum"
+Ready(-0027);
+ */
 
 #ifdef OLDSTUFF
 
@@ -106,100 +179,9 @@ printf("argc=%d\n",argc);
 #include <unistd.h>
 #include <errno.h>
 
-
-/* -- this struct is only used in this program for the time being --- */
-typedef struct PLINE {
-    int num;                               /* number of this pipeline */
-    char name[16];                           /* name of this pipeline */
-    void *stage;    /* pointer to first stage struct in this pipeline */
-    void *prev;                /* pointer to previous struct in chain */
-    void *next;                /* pointer to next struct in the chain */
-                     } PLINE;
-/* -- above will be removed or will be added to xfl.h                 */
-
-/* -- this struct is only used in this program for the time being --- */
-typedef struct STAGE {
-    int num;              /* number of this stage within its pipeline */
-    char name[16];                              /* name of this stage */
-    void *pline;     /* pointer to struct of pipeline with this stage */
-    void *prev;                /* pointer to previous struct in chain */
-    void *next;                /* pointer to next struct in the chain */
-    int argc;            /* count of arguments supplied to this stage */
-//  char *argv[];        /* array of arguments supplied to this stage */
-//  char **argv;         /* array of arguments supplied to this stage */
-    char *argv[4];       /* array of arguments supplied to this stage */
-          /* this array is intentionally limited to "verb" and "args" */
-    struct PIPECONN *pc;            /* first in a chain of connectors */
-                     } STAGE;
-/* -- above will be removed or will be added to xfl.h                 */
-
-/* one pipeline with one stage:
-Ready;
-pipe foofum
-FPLSCB027E Entry point FOOFUM not found
-FPLSCA003I ... Issued from stage 1 of pipeline 1
-FPLSCA001I ... Running "foofum"
-Ready(-0027);
- */
-
-
-/* ---------------------------------------------------------------------
- *  Similar calling convention to that of POSIX pipe() function.
- */
-int xpl_pipe(PIPECONN**pc)
-  {
-    int rc, pdf[2], pdr[2];
-    struct PIPECONN p0, *pi, *po;
-
-    rc = pipe(pdf);                  /* create the forward POSIX pipe */
-//  rc = pipe2(pdf,O_DIRECT);
-    if (rc < 0)                                 return -1;
-    rc = pipe(pdr);                  /* create the reverse POSIX pipe */
-    if (rc < 0) { close(pdf[0]); close(pdf[1]); return -1; }
-
-    pi = malloc(sizeof(p0));          /* allocate the input connector */
-    if (pi == NULL)                                /* check for error */
-      { char *msgv[2], em[16]; int en;
-        en = errno;
-        perror("xpl_pipe(): malloc()");    /* provide standard report */
-        /* also throw a pipelines/ductwork/plenum error and bail out  */
-        sprintf(em,"%d",en); msgv[1] = em;       /* integer to string */
-        xplerror(26,2,msgv,"LIB");         /* provide specific report */
-        return -1; }
-
-    po = malloc(sizeof(p0));         /* allocate the output connector */
-    if (po == NULL)                                /* check for error */
-      { char *msgv[2], em[16]; int en;
-        en = errno;
-        perror("xpl_pipe(): malloc()");    /* provide standard report */
-        free(pi);      /* remember to free the other which had worked */
-        /* also throw a pipelines/ductwork/plenum error and bail out  */
-        sprintf(em,"%d",en); msgv[1] = em;       /* integer to string */
-        xplerror(26,2,msgv,"LIB");         /* provide specific report */
-        return -1; }
-
-    pc[0] = pi;               /* "refers to the read end of the pipe" */
-    pi->flag = XPL_INPUT;
-    pi->fdf = pdf[0];          // reads content forward from producer */
-    pi->fdr = pdr[1];          // writes control backward to producer */
-    pi->prev = NULL;           /* pointer to previous struct in chain */
-    pi->next = NULL;             /* this might be the head of a chain */
-
-    pc[1] = po;              /* "refers to the write end of the pipe" */
-    po->flag = XPL_OUTPUT;
-    po->fdf = pdf[1];           // writes content forward to consumer */
-    po->fdr = pdr[0];         // reads control backward from consumer */
-    po->prev = NULL;           /* pointer to previous struct in chain */
-    po->next = NULL;             /* this might be the head of a chain */
-
-    return 0;
-  }
-
-
 /* ------------------------------------------------------------------ */
 int main(int argc,char*argv[])
   {
-    int rc, i;
     char *arg0, sep, end, bigbuf[65536], *p, *q;
     struct PLINE *pline, plin0, *plinx;
     struct STAGE *stage, stag0, *xtage;
@@ -243,7 +225,6 @@ printf("----- end '%c' sep '%c' -----\n",end,sep);
     printf("'%s'\n",bigbuf);
 printf("-----\n");
 
-    /* HERE is where we parse CMS-style options */
 
     p = bigbuf;
     /* be sure we're at the first non-blank */
@@ -322,39 +303,10 @@ printf("\n");
 printf("pipe literal real pipeline | console\n");
     rc = xpl_pipe(pc);
 
-//>>>>>
 
-    int sargc;
-    char *sargv[16];
-
-//  sargv[0] = "scaff2.sh";
-//  sargc = 1;
-
-    sargv[0] = "literal";
-    sargv[1] = "real pipeline";
-    sargc = 2;
-//  xplstagespawn(sargc,sargv,pc[1],pc[0]);   /* first stage writes to #1 */
-
-    sargv[0] = "console";
-    sargv[1] = "";
-    sargc = 2;
-//  xplstagespawn(sargc,sargv,pc[0],pc[1]);   /* second stage reads from #0 */
-
-//<<<<<
-
-    close(pc[0]->fdf);
-    close(pc[0]->fdr);
-    free(pc[0]);
-
-    close(pc[1]->fdf);
-    close(pc[1]->fdr);
-    free(pc[1]);
 
 
 printf("\n");
-
-
-//printf("dun?\n");
 
     return 0;
   }

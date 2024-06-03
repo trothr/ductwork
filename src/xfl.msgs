@@ -1,13 +1,11 @@
 *
 *
 *         Name: xfl.msgs
-*               message repository source for POSIX Pipelines
+*               message repository source for POSIX Pipelines (XFL)
 *         Date: 2023-07-07 (Thursday) day after first formal record sent
 *               removed some references to CP/CMS and other z/VM verbiage
 *
-*         Name: fpl.msgs
-*               message repository source for CMS Pipelines
-*         Date: 2023-06-12 (Monday) extracted from VM/CMS
+*         Date: 2023-06-12 (Monday) extracted from CMS Pipelines (FPL)
 *               z/VM Version 7 Release 2.0, CMS Level 30, Service Level 2201
 *
 * The next line sets the token introducer.
@@ -93,7 +91,7 @@
 0083    E Device &1 does not exist
 0084    E Virtual device &1 is not a supported virtual type
 0085    E Virtual device &1 is not a supported real type
-0086    I POSIX Pipelines &1 (Version.Release.Mod)
+0086    I POSIX Pipelines (XFL) version &1
 0087    E This stage must be the first stage of a pipeline
 0088    E Buffer overflow
 0089    E Return code &1 reading the virtual reader
@@ -1071,4 +1069,12 @@
 2756    E Too many operands.
 2811    E A stream with the stream identifier specified is already defined.
 *
+3000    I pipeline >>> &1 <<<
+3027    E Entry point is &1 ... found
+3047    I Label &1 is being re-used
+*
+* plenum: total stages 2 (3 final)
+* plenum: total streams 1
+* plenum: 2 stages launched by parent
+* plenum: 2 connectors closed and freed by launcher
 *
