@@ -12,14 +12,13 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-
 #include <fcntl.h>
-
 #include <signal.h>
-
 #include <syslog.h>
+#include <sys/stat.h>
 
 #include "configure.h"
+/* defines PREFIX among other things*/
 
 #include <xmitmsgx.h>
 /* static */ struct MSGSTRUCT xflmsgs;
@@ -90,7 +89,7 @@ char*xfl_argcat(int argc,char*argv[])
     if (buffer == NULL)          /* 0026 E Error &1 obtaining storage */
       { char *msgv[2], em[16]; int en;
         en = errno;    /* hold onto the error value in case it resets */
-        perror("argcat(): malloc()");      /* provide standard report */
+        perror("argcat(): malloc()"); /* provide standard Unix report */
         /* also throw a pipelines/ductwork/plenum error and bail out  */
         sprintf(em,"%d",en); msgv[1] = em;       /* integer to string */
         xfl_error(26,2,msgv,"LIB");        /* provide specific report */
@@ -185,6 +184,8 @@ int xfl_trace(int msgn,int msgc,char*msgv[],char*caller)
     return 0;
   }
 
+#ifdef DELETE_THIS_PLEASE
+
 /* ----------------------------------------------------------- STAGEEXEC
       DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED
  *       Calls: ...
@@ -236,11 +237,13 @@ int xfl_stageexec(char*args,PIPECONN*pc[])
     return 0;
   }
 
+#endif
+
 /* ---------------------------------------------------------- STAGESPAWN
  *       Calls: the stage indicated in argv[0]
  *   Called by: launcher
  */
-int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
+int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])     /* also need stage struct */
   /* argc - count of arguments much like Unix/POSIX main()            */
   /* argv - argument array much like Unix/POSIX main()                */
   /* pc   - pipe connector(s) this stage will use (input and output)  */
@@ -248,6 +251,7 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
     int rc, i, ii, io;
     char *p, *q, envbuf[8192], tmpbuf[256], pipepath[8192];
     PIPECONN *px;
+    struct stat sb;
 
     p = envbuf;
     /* process the supplied array of connectors */
@@ -260,7 +264,9 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
         sprintf(tmpbuf,"*.OUTPUT.%d:%d,%d",io++,pc[i]->fdf,pc[i]->fdr);
       else
 // 0100    E Direction "&1" not input or output
-{ printf("fail\n"); return -1; }
+{ printf("fail\n");
+        xfl_errno = XFL_E_DIRECTION;
+ return -1; }
 
         /* copy this token into the environment variable buffer       */
         q = tmpbuf;
@@ -271,15 +277,19 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
       }
     *p = 0x00;                                /* terminate the string */
 
+// FIXME: we should do the PIPEPATH scanning before we fork()
+
     /* fork() is expensive but the most common and reliable way here  */
     rc = fork();
     if (rc < 0) return errno;       /* negative return code: an error */
-    if (rc > 0) {               /* positive return code: PID of child */
+    if (rc > 0) {             /* positive return code is PID of child */
                           /* process the supplied array of connectors */
-                  i = 0; while (pc[i] != NULL) { pc[i]->cpid = rc; i++;
-// also un-do                                    pc[i]->flag -= XFL_F_KEEP;
-//                                          sever(pc[i]);
+                  i = 0; while (pc[i] != NULL) { pc[i]->cpid = rc;
+                                                 pc[i]->flag -= XFL_F_KEEP;
+//                                     xfl_sever(pc[i]);
+                                                 i++;
  }
+//                i has the count of connectors, for what that's worth
                   return 0; }
     /* and finally, fork() returning zero means we are the child      */
 
@@ -287,7 +297,7 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
 
 //printf("xfl_stagespawn(%d,%s %s)\n",argc,argv[0],argv[1]);
 
-    /* prepare to pass connector info to the stage */
+    /* prepare to pass connector info to the stage when it runs       */
     setenv("PIPECONN",envbuf,1);
 
     px = xfl_pipeconn;
@@ -298,27 +308,51 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])
           {
         close(px->fdf);
         close(px->fdr);
-// or maybe sever(px);
+// or maybe sever(px) instead?
           }
 // step through connectors listed closing all *not* listed
         px = px->next;
       }
 
-    /* scan PIPEPATH for the stage ($PREFIX/lib/stages) */
-//  strncpy(pipepath,getenv("PIPEPATH"),sizeof(pipepath)-1);
-// need to implement pipe path search
+if (argc < 2) argv[1] = NULL;
+
+    /* scan PIPEPATH for the stage of interest ($PREFIX/libexec/xfl)  */
+    p = getenv("PIPEPATH"); if (p == NULL) p = "";
+if (*p == 0x00) p = "stages"; // FIXME: remember to define PIPEPATH
+    strncpy(pipepath,p,sizeof(pipepath)-1);
+// need to implement pipe path search <<<<<<<<<<<<<<<<
+    p = q = pipepath;
+    while (1)
+      {
+        /* find a searchable directory in the PIPEPATH string         */
+        while (*p != 0x00 && *p != ':') p++;
+        if (*p != 0x00) *p++ = 0x00;
+
+        snprintf(tmpbuf,sizeof(tmpbuf),"%s/%s",q,argv[0]);   /* looking for arg0 */
+        rc = stat(tmpbuf,&sb);
+        if (rc == 0) break;       /* found it! break out with success */
+        if (*p == 0x00) break;  /* if end of string break out failing */
+        q = p;         /* otherwise try again with next dir in search */
+      }
+//  if (rc == 0) printf("xfl_stagespawn(): found '%s'\n",tmpbuf);
+//          else printf("xfl_stagespawn(): failed to find '%s'\n",argv[0]);
+    if (rc == 0) execv(tmpbuf,argv);
+// FIXME: if executable not found we should return to the caller
+// FIXME: and that means this needs to be processed before the fork()
+
+#ifdef THIS_WAS_REPLACED
 
     if (argc > 1) q = argv[1];
              else q = "";
     sprintf(tmpbuf,"stages/%s %s",argv[0],q);
-//printf("xfl_stagespawn(): %s\n",tmpbuf);
     system(tmpbuf);
 
-//sleep(7);
-exit(0);
+    exit(0);
+//  return 0;     NO!! we really do *not* want to go back into that code
 
-//  return 0;       NO!!
+#endif
   }
+
 
 /* ------------------------------------------------------------ PIPEPAIR
  * Conceptually similar to POSIX pipe() function, returns two ends.
@@ -605,13 +639,12 @@ int xfl_peekto(PIPECONN*pc,void*buffer,int buflen)
     if (rc < 0)
       { char *msgv[2], em[16];
         if (errno == EPIPE) {
-//printf("xfl_peekto(): got an EPIPE for a STAT\n");
- xfl_sever(pc); return -XFL_E_SEVERED; }
+ xfl_sever(pc); xfl_errno = XFL_E_SEVERED; return -1; }
         rc = 0 - errno; if (rc == 0) rc = -1;
-        perror("peekto(): write():");      /* provide standard report */
+        perror("peekto(): write():"); /* provide standard Unix report */
 //      /* also throw a pipelines/ductwork/plenum error and bail out  */
 //      sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
-//      xfl_error(26,2,msgv,"LIB");         /* provide specific report */
+//      xfl_error(26,2,msgv,"LIB");        /* provide specific report */
         return rc; }
 //printf("xfl_peekto: sent STAT control %d\n",rc);
 
@@ -621,7 +654,7 @@ int xfl_peekto(PIPECONN*pc,void*buffer,int buflen)
     if (rc < 0)
       { char *msgv[2], em[16];
         rc = 0 - errno; if (rc == 0) rc = -1;
-        perror("peekto(): read():");       /* provide standard report */
+        perror("peekto(): read()");        /* provide standard report */
 //      /* also throw a pipelines/ductwork/plenum error and bail out  */
 //      sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
 //      xfl_error(26,2,msgv,"LIB");         /* provide specific report */
@@ -664,7 +697,7 @@ int xfl_peekto(PIPECONN*pc,void*buffer,int buflen)
     if (rc < 0)
       { char *msgv[2], em[16];
         rc = 0 - errno; if (rc == 0) rc = -1;
-        perror("peekto(): read():");       /* provide standard report */
+        perror("peekto(): read()");        /* provide standard report */
 //      /* also throw a pipelines/ductwork/plenum error and bail out  */
 //      sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
 //      xfl_error(26,2,msgv,"LIB");         /* provide specific report */
@@ -706,26 +739,14 @@ int xfl_readto(PIPECONN*pc,void*buffer,int buflen)
     if (rc < 0)
       { char *msgv[2], em[16];
         if (errno == EPIPE) {
-//printf("xfl_readto(): got an EPIPE for a NEXT\n");
- xfl_sever(pc); return -XFL_E_SEVERED; }
+ xfl_sever(pc); xfl_errno = XFL_E_SEVERED; return -1; }
         rc = 0 - errno; if (rc == 0) rc = -1;
-        perror("readto(): write():");      /* provide standard report */
+        perror("readto(): write():");      /* standard Unix report */
         /* also throw a pipelines/ductwork/plenum error and bail out  */
         sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
         xfl_error(26,2,msgv,"LIB");        /* provide specific report */
         return rc; }
 
-    /* PROTOCOL:                                                      */
-    /* read the response which should be simply "OKAY" */
-//  rc = read(pc->fdf,infobuff,sizeof(infobuff));
-//  if (rc < 0)
-//    { char *msgv[2], em[16];
-//      rc = errno; if (rc == 0) rc = -1;
-//      perror("readto(): read():");       /* provide standard report */
-//      /* also throw a pipelines/ductwork/plenum error and bail out  */
-//      sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
-//      xfl_error(26,2,msgv,"LIB");        /* provide specific report */
-//      return rc; }
 
     /* increment the record counter */
     pc->rn = pc->rn + 1;
@@ -819,10 +840,9 @@ printf("xfl_output: protocol error '%s'\n",infobuff);
         if (rc < 0)
           { char *msgv[2], em[16];
             if (errno == EPIPE) {
-//printf("xfl_output(): got an EPIPE\n");
- xfl_sever(pc); return -XFL_E_SEVERED; }
+ xfl_sever(pc); xfl_errno = XFL_E_SEVERED; return -1; }
             rc = errno; if (rc == 0) rc = -1;
-            perror("xfl_output(): write():");        /* system report */
+            perror("xfl_output(): write():");   /* Unix system report */
             /* also throw a pipelines/ductwork/plenum error and bail  */
             sprintf(em,"%d",rc); msgv[1] = em;   /* integer to string */
             xfl_error(26,2,msgv,"LIB");    /* provide specific report */

@@ -16,7 +16,8 @@ LIBRARIES       =       libductwork$(LIB)
 CFLAGS          =       %CFLAGS% -I..
 PREFIX          =       %PREFIX%
 #LDFLAGS        =       %LDFLAGS% -L.. -lxfl -L../xmitmsgx -lxmitmsgx
-LDFLAGS         =       %LDFLAGS% -L.. -lxfl -lxmitmsgx
+#LDFLAGS        =       %LDFLAGS% -L.. -lxfl -lxmitmsgx
+LDFLAGS         =       %LDFLAGS% -L.. -lxfl
 SHFLAGS         =       %SHFLAGS%
 
 .PHONY:  clean distclean veryclean help \

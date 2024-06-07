@@ -122,6 +122,11 @@ install:        $(DELIVERABLES)
 #		cp -p xmitmsgx.msgs errno.msgs $(PREFIX)/share/locale/$(LOCALE)/.
 #		cp -p xmitmivp.sh $(PREFIX)/sbin/.
 
+#$(PREFIX)/share/locale/$(LOCALE)/$(APPLID).msgs
+#$(PREFIX)/share/locale/$(LOCALE)/$(APPLID).msgs
+#$(PREFIX)/lib/nls/msg/$(LOCALE)/$(APPLID).msgs
+#$(PREFIX)/lib/locale/$(LOCALE)/$(APPLID).msgs
+#$(PREFIX)/share/nls/$(LOCALE)/$(APPLID).msgs
 
 #
 makefile:       makefile.in configure
@@ -152,14 +157,10 @@ veryclean:      distclean
 help:
 
 
-
-
 #
 # 'make' tips:
 # $@ is the target
 # $+ is the list of dependencies but does not work everywhere
 #
-
-
 
 

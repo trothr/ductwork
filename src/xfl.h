@@ -31,6 +31,8 @@
 
 #define     XFL_MAX_STREAMS  16
 
+/* connectors are paired and this struct describes either side, but   */
+/* there should always be two: producer (output) and consumer (input) */
 typedef struct PIPECONN {
 
     int fdf;         /* forward flowing file descriptor used for data */
@@ -56,6 +58,8 @@ typedef struct PIPECONN {
 
                         } PIPECONN;
 
+/* This struct describes a stage. All stage structs should be chained */
+/* so that the launcher can bring them up and wait for them to exit.  */
 typedef struct PIPESTAGE {
     char *text;                       /* string describing this stage */
 //  int plinenumb;              /* pipeline where this stage runs N/A */

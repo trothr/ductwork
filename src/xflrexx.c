@@ -28,6 +28,8 @@
 
 static struct PIPECONN *xfl_rxpc = NULL;
 
+extern int xfl_errno;
+
 /* ------------------------------------------------------------- VERSION
  * Arguments: none
  * Returns: 0, always
@@ -37,16 +39,28 @@ static struct PIPECONN *xfl_rxpc = NULL;
 int rxversion(ULONG rxargc, RXSTRING rxargv[],RXSTRING*rxrets)
   {
     int xfl_version = XFL_VERSION;
+    int vv, rr, mm;
+    char verstr[16], *msgv[4];
 
-// FIXME: follow the logic for --version flag in the launcher
+    /* code variation here is historical ... maybe resolved later     */
 
-    /* split the version integer at bytes and reformat for display    */
-    snprintf(rxrets->strptr,rxrets->strlength,"POSIX Pipelines %d.%d.%d",
+    /* display the version using the message handler/displayer        */
+    vv = (xfl_version >> 24) & 0xff;           /* extract the version */
+    rr = (xfl_version >> 16) & 0xff;           /* extract the release */
+    mm = (xfl_version >> 8) & 0xff;          /* extract the mod level */
+    sprintf(verstr,"%d.%d.%d",vv,rr,mm);
+    msgv[0] = "";
+    msgv[1] = verstr;
+    xfl_error(86,2,msgv,"PIP");        /* provide standardized report */
+
+    /* return the version (numbers only) to the Rexx caller           */
+    snprintf(rxrets->strptr,rxrets->strlength,"%d.%d.%d",
        (xfl_version>>24),
-      ((xfl_version>>16)&0xFF),
-      ((xfl_version>>8)&0xFF));
+      ((xfl_version>>16) & 0xFF),
+      ((xfl_version>>8) & 0xFF));
     /* set length of Rexx return string to follow C string length     */
     rxrets->strlength = strlen(rxrets->strptr);
+
     /* always return without error */
     return 0;
   }
@@ -92,17 +106,14 @@ int rxpeekto(ULONG rxargc, RXSTRING rxargv[],RXSTRING*rxrets)
     char buffer[4096];
     struct PIPECONN *pc, *pi, *pn;
 
-//printf("rxpeekto(): %d args\n",rxargc);
     pc = xfl_rxpc;
 
     l = rxargv->strlength; j = 0;
     if (l >= sizeof(buffer)) l = sizeof(buffer) - 1;
     strncpy(buffer,rxargv->strptr,l); buffer[l] = 0x00;
-//printf("rxpeekto(): '%s' '%s'\n",rxargv->strptr,buffer);
     j = atoi(buffer);            /* the number of the selected stream */
     rxargv++;  rxargc--;   /* bump count and pointer to next argument */
 
-//printf("rxpeekto(): %d\n",j);
 
     /* snag the first input stream from the chain-o-connectors        */
     pi = NULL;
@@ -325,6 +336,7 @@ RxDuctwork(CONST CHAR *name,
               }
 
 //  retstr->strptr[retstr->strlength] = 0x00;
+//  if (rc < 0) if (xfl_errno == XFL_E_SEVERED) rc = XFL_E_SEVERED;
     if (rc < 0) rc = 0 - rc;      /* force negative RC to be positive */
            else rc = 0;            /* but positive RC is not an error */
     sprintf(retstr->strptr,"%d %s",rc,rxrets.strptr);

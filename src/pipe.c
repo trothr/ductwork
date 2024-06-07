@@ -314,3 +314,9 @@ printf("\n");
 #endif
 
 
+/*
+0059 E Logical record length &1 is not valid
+0183 E Output buffer overflow; &1 required
+0093 E Pipeline not installed as a nucleus extension; use PIPE command (BASH extension)
+0050 E Not a character or hexadecimal representation: &1
+ */
