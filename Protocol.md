@@ -1,30 +1,31 @@
-# Ductwork Protocol
+# POSIX Pipelines Protocol
 
 This page describes the traffic flow over POSIX pipes.
 
-## Ductwork Consumer/Producer Handshake
+## POSIX Pipelines (XFL) Consumer/Producer Handshake
 
-This implementation uses a pair of POSIX pipes
-to effect the managed flow of data from one stage to the next.
+The implementation uses a pair of ordinary Unix pipes, created with
+the `pipe()` system call, to effect the managed flow of data from one
+stage to the next. It combines a pair of unstructured pipes to form
+a structured pipeline.
 
-When the producer (upstream) stage performs a write,
-it blocks until the consumer (downstream) is able to ingest
-the record.
+When the producer (upstream) stage performs a write, it blocks
+until the consumer (downstream) is able to ingest the record.
 
-## Ductwork Connector
+## XFL Connector
 
 The connection between stages is represented in source code by a C struct.
 
 
                         producer            consumer
-                            ctrl <--------- ctrl
-                            data ---------> data
+                     (read) ctrl <--------- ctrl (write)
+                    (write) data ---------> data (read)
                      mode=OUTPUT            mode=INPUT
 
 
-## Ductwork Protocol
+## XFL Protocol
 
-When the producer stage attempts to write a record,
+When the producer stage wants to write a record,
 it blocks on a POSIX read awaiting instructions via the `ctrl` channel
 from the consumer stage. The consumer sends one of the following signals.
 
@@ -48,7 +49,8 @@ The producer sends data, the content of the record.
 
 Think PIPINPUT (sort of) and the consumer consumes the record.
 
-The producer sends "`OKAY`" and advances the sequence count.
+The producer sends advances the sequence count.
+The library function returns and the producer stage is unblocked.
 
 * `QUIT`
 
