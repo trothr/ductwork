@@ -72,19 +72,30 @@ A negative return code indicates an error.
 `output()` is called similarly to the POSIX system `write()` function.
 `output()` is inspired by the 'OUTPUT' command for Rexx based stages.
 
-* stageinit
+* sever
+
+Stages can `sever` a connection anytime it is no longer needed.
+
+Use the `sever()` function to sever a connection.
+The connection can be either input or output.
+
+    rc = xfl_sever(pc);
+
+`sever()` takes one argument, the connector pointer.
+
+* stagestart
 
 Before a stage can process pipeline input or output it must instantiate
 structures referencing the file descriptors supplied by the launcher.
 
-Use the `stageinit()` function to initialize a stage.
+Use the `stagestart()` function to initialize a stage.
 
 This is mandatory. <br/>
 Stages are launched by the operating system and will need structures
 allocated and populated with essential information about the pipeline
 they're running in.
 
-    rc = xfl_stageinit(pc);
+    rc = xfl_stagestart(\&pc);
 
 `stagestart()` takes one argument, a pointer to a pipeline struct anchor.
 Note that is a pointer to a pointer, two levels of indirection.
