@@ -22,11 +22,11 @@ PREFIX=/usr
 
 while [ ! -z "$*" ] ; do
     case "$1" in
-        --prefix=*|--prefi=*|--pref=*)
-            PREFIX=`echo "$1" | awk -F'=' '{print $2}'`
-            ;;
         --prefix)
             shift ; PREFIX="$1"
+            ;;
+        --prefix=*|--prefi=*|--pref=*)
+            PREFIX=`echo "$1" | awk -F'=' '{print $2}'`
             ;;
         -*)
             echo "$0: unrecognized option '$1'"
@@ -95,6 +95,7 @@ cat makefile.in \
   | sed "s#%LDFLAGS%#$LDFLAGS#g" \
   | sed "s#%SHFLAGS%#$SHFLAGS#g" \
   | sed "s#%LOCDIR%#$LOCDIR#g" \
+  | sed 's#^        #\t#' \
   > makefile
 
 # create configuration header file and sourcable shell script

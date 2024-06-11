@@ -7,17 +7,19 @@
 #
 #
 
-APPLID          =       ductwork
-VERSION         =       2.1.4
+APPLID          =       xfl
+VERSION         =       0.7.6
 
-PROJECTURL      =       http://www.casita.net/pub/ductwork/src
+#PROJECTURL     =       http://www.casita.net/pub/ductwork/src
+PROJECTURL      =       http://www.casita.net/pub/xfl/src
 LOCALE          =       en_US
 
 ##### configuration #####
 
 PREFIX          =       %PREFIX%
-CFLAGS          =       %CFLAGS% -DPREFIX=\"$(PREFIX)\"
-LDFLAGS         =       %LDFLAGS%
+CFLAGS          =       %CFLAGS% -DPREFIX=\"$(PREFIX)\" -I.
+#LDFLAGS        =       %LDFLAGS% -L. -lxfl -lxmitmsgx
+LDFLAGS         =       %LDFLAGS% -L. -lxfl
 SHFLAGS         =       %SHFLAGS%
 # we may later use CC, CXX, CPP, CPPFLAGS, and/or CXXFLAGS
 
@@ -26,15 +28,11 @@ OBJ             =       .o
 LIB             =       .a
 DLL             =       .so
 
-CFLAGS          =       %CFLAGS% -I.
-PREFIX          =       %PREFIX%
-LDFLAGS         =       %LDFLAGS% -L. -lxfl -lxmitmsgx
-SHFLAGS         =       %SHFLAGS%
 # we may later use CC, CXX, CPP, CPPFLAGS, and/or CXXFLAGS
 
 ##### configuration #####
 
-DELIVERABLES    =       pipe$(EXE) libxfl$(LIB) libxmitmsgx$(LIB)
+DELIVERABLES    =       pipe$(EXE) libxfl$(LIB)
 
 MKAR            =       $(AR) r
 
@@ -56,60 +54,73 @@ pipe.c:
 		wget $(PROJECTURL)/$@
 
 #
-pipe.o:         makefile pipe.c
-		$(CC) $(CFLAGS) -o pipe.o -c pipe.c
+pipe$(OBJ):         makefile pipe.c
+		$(CC) $(CFLAGS) -o pipe$(OBJ) -c pipe.c
 
 #
-pipe:           makefile pipe.o xfllib.o xmitmsgx.o
-		$(CC) $(LDFLAGS) -o pipe pipe.o xfllib.o xmitmsgx.o
+pipe$(EXE):     makefile pipe$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
+#		$(CC) $(LDFLAGS) -o pipe pipe$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
+		$(CC)            -o pipe pipe$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
 
-#
+# fetch the source from GitHub
 xfllib.c:
 		@echo "$(MAKE): fetching the library source"
 		wget $(PROJECTURL)/$@
 
 #
-xfllib.o:       xfllib.c xfl.h
+xfllib$(OBJ):       xfllib.c xfl.h
 		@echo "$(MAKE): compiling the library ..."
-		$(CC) $(CFLAGS) -o xfllib.o -c xfllib.c
+		$(CC) $(CFLAGS) -o xfllib$(OBJ) -c xfllib.c
 
 #
-libxfl$(LIB):   xfllib.o
+libxfl$(LIB):   xfllib$(OBJ) xmitmsgx$(OBJ)
 		@echo "$(MAKE): building the library ..."
 		@rm -f libxfl$(LIB)
-		$(MKAR) libxfl$(LIB) xfllib.o
+		$(MKAR) libxfl$(LIB) xfllib$(OBJ) xmitmsgx$(OBJ)
 
 #
-libxfl$(DLL):   xfllib.o
-		$(CC) $(LDFLAGS) -shared -o libxfl$(DLL) xfllib.o
+libxfl$(DLL):   xfllib$(OBJ)
+#		$(CC) $(LDFLAGS) -shared -o libxfl$(DLL) xfllib$(OBJ)
+		$(CC) $(SHFLAGS) -o libxfl$(DLL) xfllib$(OBJ)
 
-
-#
+# fetch the source from GitHub
 xmitmsgx.h:
 		$(MAKE) -C xmitmsgx xmitmsgx.h
 		cp -p xmitmsgx/xmitmsgx.h .
 
 #
-xmitmsgx.o:
-		$(MAKE) -C xmitmsgx xmitmsgx.o
-		cp -p xmitmsgx/xmitmsgx.o .
+xmitmsgx$(OBJ):
+		$(MAKE) -C xmitmsgx xmitmsgx$(OBJ)
+		cp -p xmitmsgx/xmitmsgx$(OBJ) .
+
+##
+#libxmitmsgx$(LIB):
+#		$(MAKE) -C xmitmsgx libxmitmsgx$(LIB)
+#		cp -p xmitmsgx/libxmitmsgx$(LIB) .
 
 #
-libxmitmsgx$(LIB):
-		$(MAKE) -C xmitmsgx libxmitmsgx$(LIB)
-		cp -p xmitmsgx/libxmitmsgx$(LIB) .
+plenum$(OBJ):         makefile plenum.c
+		$(CC) $(CFLAGS) -o plenum$(OBJ) -c plenum.c
 
+#
+#plenum:           makefile plenum$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
+#		$(CC) $(LDFLAGS) -o plenum plenum$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
+plenum$(EXE):   makefile plenum$(OBJ) libxfl$(LIB)
+#		$(CC) $(LDFLAGS) -o plenum plenum$(OBJ)
+		$(CC) -o plenum plenum$(OBJ) $(LDFLAGS)
 
 ########################################################################
 # Rexx support
-rexx:           libxflrexx.so
+rexx:           libxflrexx$(DLL)
 
-xflrexx.o:      makefile xflrexx.c xfl.h
-		$(CC) $(CFLAGS) -o xflrexx.o -c xflrexx.c
+xflrexx$(OBJ):      makefile xflrexx.c xfl.h
+		$(CC) $(CFLAGS) -o xflrexx$(OBJ) -c xflrexx.c
+#		cc    -fPIC     -o xflrexx.o     -c xflrexx.c -I/usr/opt/regina/include
 
-libxflrexx.so:  xflrexx.o xmitmsgx.o
-		$(CC) $(LDFLAGS) -shared -o libxflrexx.so xflrexx.o xfllib.o xmitmsgx.o
-
+libxflrexx$(DLL):  xflrexx$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
+		$(CC) $(LDFLAGS) -shared -o libxflrexx$(DLL) xflrexx$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
+#		cc               -shared -o libxflrexx$(DLL) xflrexx.o     xfllib.o     xmitmsgx.o
+#               SHFLAGS
 
 #
 # yeah, we need an "install" target
@@ -145,12 +156,14 @@ configure:
 
 # reset things for a fresh build from source
 clean:
-		rm -f *.o *.a *.so *.dylib *.rpm *.class *$(LIB) *$(DLL)
-		$(MAKE) -C xmitmsgx clean
-		$(MAKE) -C stages clean
+		rm -f *.o *.a *.so *.dylib *.rpm *.class *$(LIB) *$(DLL) $(OBJ)
+		-$(MAKE) -C xmitmsgx clean
+		-$(MAKE) -C stages clean
 
 distclean:      clean
-		@rm configure.h configure.sh
+		@rm -f configure.h configure.sh
+		-$(MAKE) -C xmitmsgx distclean
+		-$(MAKE) -C stages distclean
 
 veryclean:      distclean
 

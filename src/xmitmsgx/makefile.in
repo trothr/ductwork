@@ -269,7 +269,7 @@ clean:
 		rm -rf rpmbuild.d
 
 distclean:      clean
-		rm -f xmmconfig.h xmmconfig.sh
+		@rm -f configure.h configure.sh xmmconfig.h xmmconfig.sh
 
 veryclean:      distclean
 

@@ -28,13 +28,12 @@ _default:
 
 all allstages:
 #	@ls *.c | sed 's#\.c##' | xargs -n 1 $(MAKE)
-	@for F in ` ls *.c | sed 's#\.c##' ` ; do \
+	-@for F in ` ls *.c | sed 's#\.c##' ` ; do \
 	  echo "+ $(CC) $(CFLAGS) -o $$F$O -c $$F.c" ; \
-	  $(CC) $(CFLAGS) -o $$F$O -c $$F.c ; \
+	          $(CC) $(CFLAGS) -o $$F$O -c $$F.c ; \
 	  echo "+ $(CC) -o $$F $$F$O $(LDFLAGS)" ; \
-	  $(CC) -o $$F $$F$O $(LDFLAGS) ; \
+	          $(CC) -o $$F $$F$O $(LDFLAGS) ; \
 	    done
-#../xfllib$O ../xmitmsgx$O \
 
 #
 %$O:    makefile %.c
@@ -58,11 +57,6 @@ clean:
 	@ls *.c | sed 's#\.c##' | xargs rm -f
 
 distclean:  clean
-	@rm configure.h configure.sh
-
-
-#literal.o:      makefile literal.c
-#		cc -fPIC -I.. -o literal.o -c literal.c
-
+	@rm -f configure.h configure.sh
 
 

@@ -1,6 +1,7 @@
 /*
  *
  *        Name: pipe.c (C program source)
+ *        Date: 2023, 2024, and prior, and following
  *              This is called the "launcher" because "dispatcher" is
  *              not the right term. On POSIX systems, we rely on the
  *              operating system kernel to do the actual dispatching.
@@ -24,7 +25,7 @@
 int main(int argc,char*argv[])
   {
     int rc, i, nullokay;
-    char *arg0, *args, *p;
+    char *arg0, *args, *p, *q, *r;
     char *escape, *endchar, *stagesep, *pipename;   /* separator */
     char *msgv[2];
 
@@ -40,8 +41,6 @@ int main(int argc,char*argv[])
 
     /* remeober argv[0] for use later */
     arg0 = argv[0];
-//printf("argv[0]='%s'\n",arg0);
-//printf("argc=%d\n",argc);
 
     while (argc > 1 && *argv[1] == '-')
       {
@@ -73,7 +72,6 @@ int main(int argc,char*argv[])
             pipename = argv[2]; argc--; argv++; } else
 
           { /* 0014 E Option &1 not valid */
-//printf("BOGUS OPTION %s\n",argv[1]);
             msgv[1] = argv[1];
             xfl_error(14,2,msgv,"PIP"); /* 0014 E Option &1 not valid */
             return 1; }
@@ -81,61 +79,80 @@ int main(int argc,char*argv[])
         argc--; argv++;
       }
 
-    /* string-up all arguments into one */
-printf("argc=%d\n",argc);
-    args = xfl_argcat(argc,argv);             /* must eventually free */
-    if (args == NULL) /* error, then */ return 1;
+    /* string-up all arguments into a single string which we ...      */
+    args = xfl_argcat(argc,argv);         /* ... must eventually free */
+    if (args == NULL) { perror("xfl_argcat()"); return 1; }
 
+    /* skip to first non-blank in the full arguments string           */
     p = args;
-    while (*p != ' ' && *p != 0x00) p++;
+    while ((*p == ' ' && *p == '\t') && *p != 0x00) p++;
+    r = p;
 
     /* if we have CMS-style options then process them here and now    */
     if (*p == '(')
       {
-        p++;
-        while (1)
-          {
-            while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
+        /* skip to end of CMS-style options, closing parenthesis      */
+        while (*r != 0x00 && *r != ')') r++;
+        if (*r != 0x00) *r++ = 0x00;      /* terminate options string */
 
-            if (strncmp(p,"ESCAPE",3) == 0)                 /* ESCAPE */
-              { while (*p != ' ' || *p == '\t' && *p != 0x00) p++;
+        p++;
+        while (*p != 0x00)
+          {
+            /* skip to next non-blank character in CMS style args     */
+            while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
+            q = p;                        /* hold onto start of token */
+
+            /* find end of this blank-delimited token                 */
+            while (*p != ' ' && *p != '\t' && *p != 0x00) p++;
+            if (*p != 0x00) *p++ = 0x00;         /* mark end of token */
+
+            if (strncasecmp(q,"ESCAPE",3) == 0)             /* ESCAPE */
+              { /* skip to next non-blank character in CMS style args */
                 while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
-                escape = p; } else
-            if (strncmp(p,"ENDCHAR",3) == 0)               /* ENDCHAR */
-              { while (*p != ' ' || *p == '\t' && *p != 0x00) p++;
-                while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
-                endchar = p; } else
-            if (strncmp(p,"STAGESEP",2) == 0)             /* STAGESEP */
-              { while (*p != ' ' || *p == '\t' && *p != 0x00) p++;
-                while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
-                stagesep = p; } else
-            if (strncmp(p,"NAME",1) == 0)                     /* NAME */
-              { while (*p != ' ' || *p == '\t' && *p != 0x00) p++;
-                while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
-                stagesep = p; } else
+                if (*p != 0x00) escape = p++;    /* here is the value */
+                /* find the end of the blank-delimited value          */
+                while (*p != ' ' && *p != '\t' && *p != 0x00) p++;
+                if (*p != 0x00) *p++ = 0x00; } else
+
+            if (strncasecmp(q,"ENDCHAR",3) == 0)           /* ENDCHAR */
+              { while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
+                if (*p != 0x00) endchar = p++;
+                while (*p != ' ' && *p != '\t' && *p != 0x00) p++;
+                if (*p != 0x00) *p++ = 0x00; } else
+
+            if (strncasecmp(q,"STAGESEP",2) == 0)         /* STAGESEP */
+              { while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
+                if (*p != 0x00) stagesep = p++;
+                while (*p != ' ' && *p != '\t' && *p != 0x00) p++;
+                if (*p != 0x00) *p++ = 0x00; } else
+
+            if (strncasecmp(q,"NAME",1) == 0)                 /* NAME */
+              { while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
+                if (*p != 0x00) pipename = p++;
+                while (*p != ' ' && *p != '\t' && *p != 0x00) p++;
+                if (*p != 0x00) *p++ = 0x00; } else
 
               { /* 0014 E Option &1 not valid */
-//printf("BOGUS OPTION %s\n",argv[1]);
-                msgv[1] = argv[1];
+                msgv[1] = q;
                 xfl_error(14,2,msgv,"PIP");    /* Option &1 not valid */
                 return 1; }
-
-            argc--; argv++;
           }
       }
+    /* skip to first non-blank character after all options            */
+    while ((*r == ' ' || *r == '\t') && *r != 0x00) r++;
 
 printf("escape='%s'\n",escape);   /* FIXME: --escape/ESCAPE should be xorc */
 printf("endchar='%s'\n",endchar);   /* FIXME: --endchar/ENDCHAR should be xorc */
 printf("separator='%s'\n",stagesep);   /* FIXME: --stagesep/STAGESEP should be xorc */
-printf("argc=%d\n",argc);
 
-printf("args='%s'\n",args);
+printf("arg0='%s'\n",arg0);
+printf("argc=%d\n",argc);
+printf("args='%s'\n",r);
     if (*p == 0x00)   /* if empty string then we have a null pipeline */
-      {
-        if (nullokay) return 0;
+      { if (nullokay) return 0;
         xfl_error(12,2,msgv,"PIP");           /* 0012 E Null pipeline */
-        return 1; 
-      }
+        return 1; }
+
 
 /*
 int xfl_trace(int,int,char**,char*);
@@ -144,10 +161,12 @@ int xfl_getpipepart(PIPESTAGE**,char*);
 int xfl_stagespawn(int,char*[],PIPECONN*[]);
  */
 
+
     free(args);
 
     return 0;
   }
+
 
 /*
 label logic
@@ -320,3 +339,222 @@ printf("\n");
 0093 E Pipeline not installed as a nucleus extension; use PIPE command (BASH extension)
 0050 E Not a character or hexadecimal representation: &1
  */
+
+
+
+
+
+
+
+/*****************************************************************************/
+
+
+
+
+
+
+#ifdef _TO_MERGE
+
+/*
+extern struct PIPECONN *xfl_pipeconn;
+extern struct PIPESTAGE *xfl_pipestage;
+ */
+
+/* ------------------------------------------------------------------ */
+int main(int argc,char*argv[])
+  {
+    int rc, snum, pnum, pend, i;
+    char *args, *p, *q, *msgv[16];
+    struct PIPECONN *pp[3], *pi, *po, *px;
+    struct PIPESTAGE *sx;
+    int wpid, wstatus;
+
+
+
+//printf("plenum: the pipeline >>>\n%s\n<<<\n",args);
+    msgv[1] = args;
+    xfl_trace(3000,2,msgv,"PIP");
+
+    /* start with some defaults */
+    stagesep = '|'; streamsep = '!'; snum = pnum = 1;
+    p = q = args;
+    pp[0] = pp[1] = pp[2] = px = NULL;    /* start with no connectors */
+
+
+    /* step through the pipeline specification string                 */
+    while (*p != 0x00)
+      {
+        while (*p != 0x00 && *p != stagesep && *p != streamsep) p++;
+        /* we have a stage ... might be the only one ... or a stream end */
+
+        pi = pp[0];         /* input here is output of previous stage */
+                                 /* it's the read side of the PC pair */
+if (pi != NULL && px == NULL) px = pi;      /* not sure this is right */
+
+pend = 0;
+
+        if (*p == stagesep)   /* we have a follow-on stage, get ready */
+          {
+            *p++ = 0x00;                 /* terminate this sub-string */
+            xfl_pipepair(pp);        /* get a new connector pair pp[] */
+            po = pp[1];     /* our output is next's input (write end) */
+          } else {            /* we are the last stage in this stream */
+            if (*p && (*p == streamsep))
+              { /* the following three need to be done AFTER stage stacking */
+                pend = 1;
+                pnum = pnum + 1;            /* bump the stream number */
+//              snum = 1;                   /* reset the stage number */
+//              pp[0] = pp[1] = NULL;   /* start next w no connectors */
+              }
+            /* in any case ... */
+            if (*p) *p++ = 0x00;         /* terminate this sub-string */
+            po = NULL;       /* and we have no follow-on so no output */
+                 }
+
+        /* stack this stage */
+          {
+            int arqc, i;
+            char *arqv[3], *r, *l;
+            struct PIPESTAGE ps0, *ps; /* ps = &ps0; */
+
+            r = q;
+            /* skip past any leading white space */
+            while (*r == ' ' || *r == '\t')               r++;
+
+            /* peel-off any stage label */
+            l = r;
+            while (*r != ' ' && *r != '\t' && *r != ':' && *r != 0x00) r++;
+            if (*r == ':')
+              {
+                *r++ = 0x00;         /* delimit label and advance pointer */
+            /* skip past any leading white space */
+            while (*r == ' ' || *r == '\t')               r++;
+              } else {
+                r = l;
+                l = "";
+                     }
+
+            arqv[0] = r;         /* stage verb */
+            while (*r != ' ' && *r != '\t' && *r != 0x00) r++;
+            if (*r != 0x00) *r++ = 0x00;
+            arqv[1] = r;         /* stage args */
+            if (*r == 0x00) arqc = 1; else arqc = 2;
+//printf("verb '%s' args '%s'\n",arqv[0],arqv[1]);
+//printf("plenum: %s: %s\n",l,arqv[0]);
+
+        /* get a new struct for this stage */
+        xfl_getpipepart(&ps,l);
+if (ps == NULL) printf("error\n");
+
+              {
+                char *v0, *v1;
+                v0 = arqv[0]; v1 = ps->arg0;
+                if (v0 == NULL) v0 = "";
+                if (v1 == NULL) v1 = "";
+if (*v0 && *v1) printf("plenum: ERROR: multiple commands on a stage\n");
+              }
+            if (arqv[0] != NULL && *arqv[0] != 0x00)
+              { ps->arg0 = arqv[0];
+                if (arqv[1] != NULL && *arqv[1] != 0x00)
+                    ps->args = arqv[1]; }
+
+//printf("plenum: PC counters %d %d\n",ps->ipcc,ps->opcc);
+            if (pi != NULL)
+              { ps->ipcv[ps->ipcc] = pi;
+                ps->ipcc = ps->ipcc + 1;
+                ps->ipcv[ps->ipcc] = NULL;       /* mark end of chain */
+                ps->xpcv[ps->xpcc] = pi;
+                ps->xpcc = ps->xpcc + 1;
+                ps->xpcv[ps->xpcc] = NULL; }     /* mark end of chain */
+            if (po != NULL)
+              { ps->opcv[ps->opcc] = po;
+                ps->opcc = ps->opcc + 1;
+                ps->opcv[ps->opcc] = NULL;       /* mark end of chain */
+                ps->xpcv[ps->xpcc] = po;
+                ps->xpcc = ps->xpcc + 1;
+                ps->xpcv[ps->xpcc] = NULL; }     /* mark end of chain */
+//printf("plenum: PC counters %d %d\n",ps->ipcc,ps->opcc);
+//printf("   pi = %08X;    po = %08X; %s\n",pi,po,ps->arg0);
+          }
+
+
+        stagetot++;                    /* bump stagenum for reporting */
+        if (pend)       /* if end of stream then prep for next stream */
+          {
+                snum = 1;                   /* reset the stage number */
+                pp[0] = pp[1] = NULL;   /* start next w no connectors */
+          }
+        else    snum = snum + 1;      /* bump stagenum for next cycle */
+        q = p;    /* set q to point to next, if any */
+      }
+//printf("\n");           /* development */
+//printf("plenum: total stages %d (%d final)\n",stagetot,snum);
+//printf("plenum: total streams %d\n",pnum);
+
+/* -- END OF PARSING ------------------------------------------------ */
+
+    /* be sure that stages won't get whacked by SIGPIPE on connectors */
+    signal(SIGCHLD,SIG_IGN);
+
+    /* launch all stacked/queued stages */
+    i = 0; sx = xfl_pipestage;
+    while (sx != NULL)
+      {
+        int c; char *a;
+        char *arqv[3];
+        void *v;
+
+        a = sx->args;
+        if (a != NULL && *a != 0x00) c = 2; else c = 1;
+        arqv[0] = sx->arg0;
+        arqv[1] = sx->args;
+        arqv[2] = NULL;
+
+//      pi = sx->ipcv[0];   /* pi */
+//      po = sx->opcv[0];   /* po */
+
+//      a = sx->label; if (a == NULL) a = "";
+//printf("plenum: %s: %s\n",a,sx->arg0);
+//printf("plenum: %s %s\n",sx->arg0,sx->args);
+
+        v = sx->xpcv;
+        xfl_stagespawn(c,arqv,v);
+
+        i = i + 1;
+        sx = sx->next;
+      }
+//printf("plenum: %d stages launched by parent\n",i);
+
+    if (args != NULL) free(args);           /* see xfl_argcat() above */
+
+    /* remember to free the connectors too ... at least close FDs     */
+    px = xfl_pipeconn;
+    i = 0 ; while (px != NULL)
+      {
+        i = i + 1;
+//printf("plenum: connector %X sent to PID %d\n",px,px->cpid);
+//printf("closing %d\n",px->fdf);
+        close(px->fdf);
+//printf("closing %d\n",px->fdr);
+        close(px->fdr);
+        pi = px;
+        px = px->next;
+        free(pi);
+      }
+//printf("plenum: %d connectors closed and freed by parent\n",i);
+
+    while (1)
+      {
+        rc = wpid = waitpid(-1,&wstatus,0);
+        if (rc < 1) break;
+        printf("plenum: stage with PID %d finished\n",wpid);
+      }
+    if (rc < 0) perror("waitpid()");
+
+sleep(5);
+
+    return 0;
+  }
+
+#endif
+
