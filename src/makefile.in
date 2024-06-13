@@ -122,6 +122,40 @@ libxflrexx$(DLL):  xflrexx$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
 #		cc               -shared -o libxflrexx$(DLL) xflrexx.o     xfllib.o     xmitmsgx.o
 #               SHFLAGS
 
+########################################################################
+# Java support (JNI)
+java:           xfljava.o
+
+com/casita/xfl:
+	        mkdir -p com
+	        rm -f com/casita ; ln -s . com/casita
+	        rm -f com/casita/xfl ; ln -s .. com/casita/xfl
+
+PipelineService.class:  PipelineService.java
+	        @$(MAKE) com/casita/xfl
+	        javac PipelineService.java
+
+com/casita/xfl/PipelineService.java:  PipelineService.java
+	        mkdir -p com
+	        rm -f com/casita ; ln -s . com/casita
+	        rm -f com/casita/xfl ; ln -s .. com/casita/xfl
+
+#
+# this file is for comparison and discarded once xfljava.c is up-to-date
+java.h:          com/casita/xfl/PipelineService.java
+	@echo "$(MAKE): [re]creating the Java signature header"
+#               javah com.casita.xfl.PipelineService
+#               javah PipelineService
+#               javah -jni -o xfljava.h PipelineService.class
+	        javac com/casita/xfl/PipelineService.java
+                javah -jni -o xfljava.h com.casita.xfl.PipelineService
+#               mv com_casita_xfl_PipelineService.h xfljava.h
+
+xfljava.o:      xfljava.c
+        cc -I. -I/usr/lib/jvm/java-1.8.0-openjdk/include -I/usr/lib/jvm/java-1.8.0-openjdk/include/linux -c xfljava.c
+
+########################################################################
+
 #
 # yeah, we need an "install" target
 install:        $(DELIVERABLES)

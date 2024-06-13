@@ -114,7 +114,6 @@ int rxpeekto(ULONG rxargc, RXSTRING rxargv[],RXSTRING*rxrets)
     j = atoi(buffer);            /* the number of the selected stream */
     rxargv++;  rxargc--;   /* bump count and pointer to next argument */
 
-
     /* snag the first input stream from the chain-o-connectors        */
     pi = NULL;
     for (pn = pc; pi == NULL && pn != NULL; pn = pn->next)

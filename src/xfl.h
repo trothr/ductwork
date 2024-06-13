@@ -14,11 +14,13 @@
 #define  XFL_VERSION  (((0) << 24) + ((7) << 16) + ((6) << 8) + (0))
 //static int xfl_version = XFL_VERSION;
 
+/* the following mnemonics represent bits in the flag field           */
 #define     XFL_F_INPUT         0x0001
 #define     XFL_F_OUTPUT        0x0002
 #define     XFL_F_KEEP          0x0010           /* keep during spawn */
 #define     XFL_F_SEVERED       0x0020           /* explicit or EPIPE */
 
+/* the following mnemonics are simple numeric but must be unique      */
 #define     XFL_E_NONE          0
 #define     XFL_E_SEVERED       12         /* to follow CMS Pipelines */
 #define     XFL_E_NULLPTR       31                       /* arbitrary */
@@ -29,7 +31,11 @@
 #define     XFL_E_2756          2756  /* Too many operands. */
 #define     XFL_E_2811          2811  /* A stream with the stream identifier specified is already defined. */
 
-#define     XFL_MAX_STREAMS  16
+/*          XFL_MAX_STREAMS  16       */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* connectors are paired and this struct describes either side, but   */
 /* there should always be two: producer (output) and consumer (input) */
@@ -91,7 +97,7 @@ int xfl_trace(int,int,char**,char*);      /* msgn, msgc, msgv, caller */
 int xfl_pipepair(PIPECONN*[]);             /* allocate an in/out pair */
 int xfl_getpipepart(PIPESTAGE**,char*);
 
-int xfl_stagespawn(int,char*[],PIPECONN*[]);
+int xfl_stagespawn(int,char*[],PIPECONN*[],PIPESTAGE*);
 
 /* --- function prototypes for stages ------------------------------- */
 
@@ -101,6 +107,10 @@ int xfl_readto(PIPECONN*,void*,int);      /* pipeconn, buffer, buflen */
 int xfl_output(PIPECONN*,void*,int);      /* pipeconn, buffer, buflen */
 int xfl_sever(PIPECONN*);                   /* disconnect a connector */
 int xfl_stagequit(PIPECONN*);          /* releases the pipeconn array */
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
 
 #define _XFLLIB_H
 #endif

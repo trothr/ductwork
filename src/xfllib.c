@@ -34,6 +34,7 @@ int xfl_stageexec(char*,PIPECONN*[]);
 /* DELETE THE ABOVE ROUTINE */
 
 static int xfl_errno = XFL_E_NONE;
+static int xfl_dotrace = 0;
 
 /* ---------------------------------------------------------------------
  *  This is a byte-at-a-time read function which attempts to consume
@@ -154,6 +155,13 @@ int xfl_trace(int msgn,int msgc,char*msgv[],char*caller)
     char msgbuf[256];
     int rc;
 
+    /* consider tracing ... do we want it or not? */
+    if (xfl_dotrace == 0)
+      { char *p;
+        p = getenv("PIPEOPT_TRACE");
+        if (p != NULL && *p != 0x00) xfl_dotrace = 1; }
+    if (xfl_dotrace == 0) return 0;
+
     rc = xmopen("xfl",0,&xflmsgs);
 
     /* some functions indicate the error with a negative number       */
@@ -243,7 +251,7 @@ int xfl_stageexec(char*args,PIPECONN*pc[])
  *       Calls: the stage indicated in argv[0]
  *   Called by: launcher
  */
-int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])     /* also need stage struct */
+int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[],PIPESTAGE*sx)
   /* argc - count of arguments much like Unix/POSIX main()            */
   /* argv - argument array much like Unix/POSIX main()                */
   /* pc   - pipe connector(s) this stage will use (input and output)  */
@@ -287,6 +295,7 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[])     /* also need stage st
                   i = 0; while (pc[i] != NULL) { pc[i]->cpid = rc;
                                                  pc[i]->flag -= XFL_F_KEEP;
 //                                     xfl_sever(pc[i]);
+                                                 sx->cpid = rc;
                                                  i++;
  }
 //                i has the count of connectors, for what that's worth
@@ -318,6 +327,7 @@ if (argc < 2) argv[1] = NULL;
 
     /* scan PIPEPATH for the stage of interest ($PREFIX/libexec/xfl)  */
     p = getenv("PIPEPATH"); if (p == NULL) p = "";
+//  if (*p == 0x00) p = PREFIX "/libexec/xfl";
 if (*p == 0x00) p = "stages"; // FIXME: remember to define PIPEPATH
     strncpy(pipepath,p,sizeof(pipepath)-1);
 // need to implement pipe path search <<<<<<<<<<<<<<<<
@@ -880,6 +890,97 @@ int xfl_sever(PIPECONN*pc)
 
     /* clear the global errno and return non error */
     xfl_errno = XFL_E_NONE;
+    return 0;
+  }
+
+/* -- COBOL support ------------------------------------------------- *
+ *    The following routines were added to support COBOL              *
+ *    but they facilitate any language using call-by-reference.       *
+ * ------------------------------------------------------------------ */
+
+static struct PIPECONN *xfl_pc_common = NULL;
+
+int XFLVERS(char*b)
+  { /* return the version (numbers only) to the caller                */
+    sprintf(b,"%d.%d.%d",
+       (xfl_version>>24),
+      ((xfl_version>>16) & 0xFF),
+      ((xfl_version>>8) & 0xFF));
+    return 0; }
+
+/* ------------------------------------------------------------------ *
+ *    NOTE: these are ham-strung and only do stream zero              *
+ * ------------------------------------------------------------------ */
+
+int XFLINIT()
+  {
+    int rc;
+    struct PIPECONN *pc;
+
+    /* if we have done this before then return no error               */
+    if (xfl_pc_common != NULL) return 0;
+
+    /* initialize this stage                                          */
+    rc = xfl_stagestart(&pc);
+    if (rc != 0) return rc;
+
+    xfl_pc_common = pc;
+    return 0;
+  }
+
+int XFLPEEK(int*sn,char*b,int*bl)
+  {
+    int rc;
+    struct PIPECONN *pi, *pn;
+
+    XFLINIT();
+
+    /* snag the first input stream from the chain-o-connectors        */
+    pi = NULL;
+    for (pn = xfl_pc_common; pi == NULL && pn != NULL; pn = pn->next)
+      if (pn->flag & XFL_F_INPUT) pi = pn;
+
+    rc = xfl_peekto(pi,b,*bl);                        /* sip on input */
+    if (rc < 0) return rc;
+    *bl = rc;
+
+    return 0;
+  }
+
+int XFLOUT(int*sn,char*b,int*bl)
+  {
+    int rc;
+    struct PIPECONN *po, *pn;
+
+    XFLINIT();
+
+    /* snag the first output stream from the chain-o-connectors       */
+    po = NULL;
+    for (pn = xfl_pc_common; po == NULL && pn != NULL; pn = pn->next)
+      if (pn->flag & XFL_F_OUTPUT) po = pn;
+
+    rc = xfl_output(po,b,*bl);                    /* write the record */
+    if (rc < 0) return rc;
+
+    return 0;
+  }
+
+int XFLREAD(int*sn,char*b,int*bl)
+  {
+    int rc;
+    struct PIPECONN *pi, *pn;
+
+    XFLINIT();
+
+    /* snag the first input stream from the chain-o-connectors        */
+    pi = NULL;
+    for (pn = xfl_pc_common; pi == NULL && pn != NULL; pn = pn->next)
+      if (pn->flag & XFL_F_INPUT) pi = pn;
+
+    rc = xfl_readto(pi,b,*bl);            /* consume the input record */
+    if (rc < 0) return rc;
+    *bl = rc;
+
     return 0;
   }
 

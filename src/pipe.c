@@ -19,15 +19,22 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 #include <xfl.h>
+
+extern struct PIPECONN *xfl_pipeconn;
+extern struct PIPESTAGE *xfl_pipestage;
 
 int main(int argc,char*argv[])
   {
     int rc, i, nullokay;
     char *arg0, *args, *p, *q, *r;
-    char *escape, *endchar, *stagesep, *pipename;   /* separator */
+    char *escape, *endchar, *stagesep, *pipename, *dotrace;
     char *msgv[2];
+    struct PIPECONN *pi, *px;
+    int wpid, wstatus;
 
     nullokay = 0;            /* null pipeline is *not* initially okay */
 
@@ -38,6 +45,8 @@ int main(int argc,char*argv[])
     if (endchar == NULL)                                   endchar = "";
     stagesep = getenv("PIPEOPT_SEPARATOR");         /* default is bar */
     if (stagesep == NULL || *stagesep == 0x00)           stagesep = "|";
+
+    pipename = dotrace = "";
 
     /* remeober argv[0] for use later */
     arg0 = argv[0];
@@ -70,6 +79,9 @@ int main(int argc,char*argv[])
         if (strcmp(argv[1],"--name") == 0)                    /* NAME */
           { if (argc < 3) { printf("error\n"); return 1; }
             pipename = argv[2]; argc--; argv++; } else
+
+        if (strcmp(argv[1],"--trace") == 0)                  /* TRACE */
+            dotrace = "YES"; else
 
           { /* 0014 E Option &1 not valid */
             msgv[1] = argv[1];
@@ -154,6 +166,11 @@ printf("args='%s'\n",r);
         return 1; }
 
 
+    /* if tracing was requested then set this environment variable    */
+    if (*dotrace != 0x00) setenv("PIPEOPT_TRACE",dotrace,1);
+
+
+
 /*
 int xfl_trace(int,int,char**,char*);
 int xfl_pipepair(PIPECONN*[]);
@@ -161,8 +178,31 @@ int xfl_getpipepart(PIPESTAGE**,char*);
 int xfl_stagespawn(int,char*[],PIPECONN*[]);
  */
 
+    /* shut it all down */
 
     free(args);
+
+    /* remember to free the connectors too ... at least close FDs     */
+    px = xfl_pipeconn;
+    i = 0 ; while (px != NULL)
+      {
+        i = i + 1;
+        close(px->fdf);
+        close(px->fdr);
+        pi = px;
+        px = px->next;
+        free(pi);
+      }
+
+    /* wait for stages to complete */
+
+    while (1)
+      {
+        rc = wpid = waitpid(-1,&wstatus,0);
+        if (rc < 1) break;
+        printf("pipe: stage with PID %d finished\n",wpid);
+      }
+    if (rc < 0) perror("waitpid()");
 
     return 0;
   }
@@ -525,31 +565,9 @@ if (*v0 && *v1) printf("plenum: ERROR: multiple commands on a stage\n");
       }
 //printf("plenum: %d stages launched by parent\n",i);
 
-    if (args != NULL) free(args);           /* see xfl_argcat() above */
+//  if (args != NULL) free(args);           /* see xfl_argcat() above */
 
-    /* remember to free the connectors too ... at least close FDs     */
-    px = xfl_pipeconn;
-    i = 0 ; while (px != NULL)
-      {
-        i = i + 1;
-//printf("plenum: connector %X sent to PID %d\n",px,px->cpid);
-//printf("closing %d\n",px->fdf);
-        close(px->fdf);
-//printf("closing %d\n",px->fdr);
-        close(px->fdr);
-        pi = px;
-        px = px->next;
-        free(pi);
-      }
-//printf("plenum: %d connectors closed and freed by parent\n",i);
 
-    while (1)
-      {
-        rc = wpid = waitpid(-1,&wstatus,0);
-        if (rc < 1) break;
-        printf("plenum: stage with PID %d finished\n",wpid);
-      }
-    if (rc < 0) perror("waitpid()");
 
 sleep(5);
 
@@ -557,4 +575,5 @@ sleep(5);
   }
 
 #endif
+
 

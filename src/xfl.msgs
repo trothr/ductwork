@@ -1072,6 +1072,7 @@
 3000    I pipeline >>> &1 <<<
 3027    E Entry point is &1 ... found
 3047    I Label &1 is being re-used
+3099    I stage &1 with PID &2 finished
 *
 * plenum: total stages 2 (3 final)
 * plenum: total streams 1
