@@ -190,7 +190,9 @@ configure:
 
 # reset things for a fresh build from source
 clean:
-		rm -f *.o *.a *.so *.dylib *.rpm *.class *$(LIB) *$(DLL) $(OBJ)
+#									.
+		rm -f *.o *.a *.so *.dylib *.rpm *.class \
+		  *$(LIB) *$(DLL) *$(OBJ) pipe$(EXE) plenum$(EXE) cobstage$(EXE)
 		-$(MAKE) -C xmitmsgx clean
 		-$(MAKE) -C stages clean
 

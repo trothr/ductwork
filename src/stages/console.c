@@ -1,7 +1,7 @@
 /*
  *
  *        Name: console.c (C program source)
- *              Ductwork CONSOLE stage
+ *              POSIX Pipelines CONSOLE stage
  *        Date: 2010-Mar-24, 2023-07, 2024
  *              reads stdin and writes to primary output
  *               -or-

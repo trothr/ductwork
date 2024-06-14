@@ -1,7 +1,7 @@
 /*
  *
  *        Name: locate.c (C program source)
- *              Ductwork LOCATE stage
+ *              POSIX Pipelines LOCATE stage
  *        Date: 2024-05-29 (Wed)
  *
  *
@@ -51,7 +51,7 @@ int main(int argc,char*argv[])
       { if (pn->flag & XFL_F_OUTPUT) pos = pn; }
 
 //printf("locate: %08X %08X %08X\n",pi,pop,pos);
-
+//system("printenv | grep 'PIPE'");
 
     while (1)
       {
@@ -61,11 +61,17 @@ int main(int argc,char*argv[])
         if (rc < 0) break; /* else */ buflen = rc;
         buffer[buflen] = 0x00;
 
-
-        /* is the string present? Y: write to primary, N: secondary   */
+#ifdef XFL_STAGE_NLOCATE
+//printf("nlocate: haystack '%s'\n",buffer);
+//printf("nlocate: needle '%s'\n",needle);
+        /* is string NOT present? Y: write to primary, N: secondary   */
+        if (strstr(buffer,needle) == NULL)
+#else
 //printf("locate: haystack '%s'\n",buffer);
 //printf("locate: needle '%s'\n",needle);
+        /* is the string present? Y: write to primary, N: secondary   */
         if (strstr(buffer,needle) != NULL)
+#endif
         rc = xfl_output(pop,buffer,buflen);   /* send it down primary */
         else
         rc = xfl_output(pos,buffer,buflen); /* send it down secondary */

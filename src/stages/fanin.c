@@ -1,7 +1,7 @@
 /*
  *
  *        Name: fanin.c (C program source)
- *              Ductwork FANIN stage
+ *              POSIX Pipelines FANIN stage
  *        Date: 2024-05-05
  *              reads all input records, holds them in memory,
  *              then writes them all out after input is severed

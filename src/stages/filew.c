@@ -1,7 +1,7 @@
 /*
  *
  *        Name: filew.c (C program source)
- *              Ductwork FILEW stage (file write)
+ *              POSIX Pipelines FILEW stage (file write)
  *        Date: 2024-05-28 (Tue) taking a break from Rexx development
  *              This stage reads records and writes a file.
  *
@@ -40,7 +40,11 @@ int main(int argc,char*argv[])
     fn = p;
 
     /* open the named file for writing                                */
+#ifdef XFL_STAGE_FILEAPPEND
+    rc = fd = open(fn,O_WRONLY|O_CREAT|O_APPEND,0666);
+#else
     rc = fd = open(fn,O_WRONLY|O_CREAT|O_TRUNC,0666);
+#endif
     if (rc < 0)
       { char em[16]; int en;
         en = errno;    /* hold onto the error value in case it resets */
@@ -59,8 +63,6 @@ int main(int argc,char*argv[])
       { if (pn->flag & XFL_F_OUTPUT) { if (po == NULL) po = pn; }
         if (pn->flag & XFL_F_INPUT)  { if (pi == NULL) pi = pn; } }
 
-    /* 0061 E Output specification missing, "no output"               */
-    if (po == NULL) { xfl_error(61,0,NULL,"FIO"); return 1; }
 
     /* 0127 E This stage cannot be first in a pipeline                */
     if (pi == NULL) { xfl_error(127,0,NULL,"FIO"); return 1; }
@@ -68,16 +70,17 @@ int main(int argc,char*argv[])
     while (1)
       {
         buflen = sizeof(buffer);        /* start with max record size */
-        rc = xfl_peekto(pi,buffer,buflen);        /* sip on the input */
+        rc = xfl_peekto(pi,buffer,buflen-1);      /* sip on the input */
         if (rc < 0) break; /* else */ buflen = rc;
-        buffer[buflen] = 0x00;     /* terminate the string for stdout */
+        buffer[buflen++] = '\n';  /* mark it with a newline character */
+        buffer[buflen] = 0x00;                /* terminate the string */
 //printf("filew: got a record %d\n",buflen);
 
         /* write this record to the file */
         rc = write(fd,buffer,buflen);
 //      if (rc < buflen) break;
         if (rc < 0) break;
-        write(fd,"\n",1);     /* and mark it with a newline character */
+//      write(fd,"\n",1);     /* and mark it with a newline character */
 
         /* write the record to our primary output stream              */
         if (po != NULL) rc = xfl_output(po,buffer,buflen);

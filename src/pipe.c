@@ -165,18 +165,19 @@ printf("args='%s'\n",r);
         xfl_error(12,2,msgv,"PIP");           /* 0012 E Null pipeline */
         return 1; }
 
-
     /* if tracing was requested then set this environment variable    */
     if (*dotrace != 0x00) setenv("PIPEOPT_TRACE",dotrace,1);
 
+    /* now parse the duly derived pipeline                            */
+    msgv[1] = args;
+    xfl_trace(3000,2,msgv,"PIP");
 
 
-/*
-int xfl_trace(int,int,char**,char*);
-int xfl_pipepair(PIPECONN*[]);
-int xfl_getpipepart(PIPESTAGE**,char*);
-int xfl_stagespawn(int,char*[],PIPECONN*[]);
- */
+
+
+
+
+
 
     /* shut it all down */
 
@@ -185,23 +186,19 @@ int xfl_stagespawn(int,char*[],PIPECONN*[]);
     /* remember to free the connectors too ... at least close FDs     */
     px = xfl_pipeconn;
     i = 0 ; while (px != NULL)
-      {
-        i = i + 1;
+      { i = i + 1;
         close(px->fdf);
         close(px->fdr);
         pi = px;
         px = px->next;
-        free(pi);
-      }
+        free(pi); }
 
     /* wait for stages to complete */
 
     while (1)
-      {
-        rc = wpid = waitpid(-1,&wstatus,0);
+      { rc = wpid = waitpid(-1,&wstatus,0);
         if (rc < 1) break;
-        printf("pipe: stage with PID %d finished\n",wpid);
-      }
+        printf("pipe: stage with PID %d finished\n",wpid); }
     if (rc < 0) perror("waitpid()");
 
     return 0;
@@ -234,144 +231,12 @@ Ready(-0027);
 
 #ifdef OLDSTUFF
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
+#include <errno.h>                                                              // OLDSTUFF
 
-/* ------------------------------------------------------------------ */
-int main(int argc,char*argv[])
-  {
-    char *arg0, sep, end, bigbuf[65536], *p, *q;
-    struct PLINE *pline, plin0, *plinx;
-    struct STAGE *stage, stag0, *xtage;
-    int plines, stages;
-    struct PIPECONN *pc[2];
-
-    sep = '|';                /* default stage separator is the usual */
-    end = 0x00;                   /* default end character is not set */
-
-
-    arg0 = argv[0];
-
-    /* process Unix-style options as individual argv elements         */
-    while (argc > 1 && *argv[1] == '-')
-      {
-        printf("option %s\n",argv[1]);
-
-        if (strcmp(argv[1],"--end") == 0) { argc--; argv++; end = argv[1][0]; }
-
-        argc--; argv++;
-      }
-
-printf("----- end '%c' sep '%c' -----\n",end,sep);
-
-    /* allocate a struct for this pipeline */
-    pline = malloc(sizeof(plin0));
-    pline->prev = NULL;        /* pointer to previous struct in chain */
-    pline->next = NULL;    /* this is (so far) last pipeline in chain */
-    pline->stage = stage = NULL;    /* we will define the stages soon */
-    pline->num = plines = 1;
-
-    /* turn all arguments into one big string */
-    p = bigbuf;
-    for (i = 1; i < argc; i++)
-      {
-        if (i > 1) *p++ =  ' ';
-//      printf("'%s'\n",argv[i]);
-        q = argv[i];
-        while (*q != 0x00) *p++ = *q++;
-      }
-    printf("'%s'\n",bigbuf);
-printf("-----\n");
-
-
-    p = bigbuf;
-    /* be sure we're at the first non-blank */
-    while (*p == ' ') p++;
-
-    stages = 0;
-    while (1)
-      {
-
-        /* if first stage in this pipeline then start the chain       */
-        if (stage == NULL) pline->stage = stage = malloc(sizeof(stag0));
-        else          /* in any case allocate a struct for this stage */
-          {
-            stage->next = malloc(sizeof(stag0));
-            stage = stage->next;
-          }
-        stage->prev = NULL;    /* pointer to previous struct in chain */
-        stage->next = NULL;       /* this is (so far) last stage in chain */
-        stage->num = ++stages;
-
-        /* indicate the pipeline where this stage runs */
-        stage->pline = pline;
-
-    /* There are only two character sets we really care about here:   *
-     * ASCII and EBCDIC. In both of those, blank and null collate     *
-     * lower than all printable characters. So we can safely replace  *
-     * blank with null when parsing this string.                      */
-
-    q = p;
-    while (*p != 0x00 && *p != sep) p++;
-    if (*p == sep)
-      {
-        *p++ = 0x00;
-        while (*p == ' ') p++;     /* skip to first non-blank in next */
-        stage->next = malloc(sizeof(stag0));      /* allocate another */
-        /* FIXME: check the return code */
-      }
-
-    /* the "verb" is the first non-blank token in the stage string    */
-    stage->argv[0] = q; stage->argc = 1;
-    while (*q != 0x00 && *q != ' ') q++;      /* skip to end of token */
-    while (*q != 0x00 && *q == ' ') *q++ = 0x00;   /* null-out blanks */
-
-    /* if there are arguments for this stage then pass them from here */
-    if (*q != ' ' && *q != 0x00) {
-stage->argv[1] = q; stage->argc = 2;
-printf("'%s' '%s'\n",stage->argv[0],stage->argv[1]);
- } else
-printf("'%s'\n",stage->argv[0]);
-
-    if (stage->next == NULL) break;
-
-      }
-
-printf("-----\n");
-
-    stage = pline->stage;
-    while (stage != NULL)
-      {
-printf("freeing stage number %d\n",stage->num);
- xtage = stage->next; free(stage); stage = xtage; }
-
-    while (pline != NULL)
-      {
-    printf("freeing pipeline number %d\n",pline->num);
- plinx = pline->next;
-    free(pline);
-    pline = plinx;
-      }
-
-printf("-----\n");
-
-/* -- literal real pipeline | console ------------------------------- */
-
-printf("\n");
-printf("pipe literal real pipeline | console\n");
-    rc = xpl_pipe(pc);
-
-
-
-
-printf("\n");
-
-    return 0;
-  }
+    sep = '|';                /* default stage separator is the usual */        // OLDSTUFF
+    end = 0x00;                   /* default end character is not set */        // OLDSTUFF
 
 #endif
-
 
 /*
 0059 E Logical record length &1 is not valid
@@ -380,18 +245,7 @@ printf("\n");
 0050 E Not a character or hexadecimal representation: &1
  */
 
-
-
-
-
-
-
 /*****************************************************************************/
-
-
-
-
-
 
 #ifdef _TO_MERGE
 
@@ -411,9 +265,6 @@ int main(int argc,char*argv[])
 
 
 
-//printf("plenum: the pipeline >>>\n%s\n<<<\n",args);
-    msgv[1] = args;
-    xfl_trace(3000,2,msgv,"PIP");
 
     /* start with some defaults */
     stagesep = '|'; streamsep = '!'; snum = pnum = 1;
@@ -553,23 +404,12 @@ if (*v0 && *v1) printf("plenum: ERROR: multiple commands on a stage\n");
 //      pi = sx->ipcv[0];   /* pi */
 //      po = sx->opcv[0];   /* po */
 
-//      a = sx->label; if (a == NULL) a = "";
-//printf("plenum: %s: %s\n",a,sx->arg0);
-//printf("plenum: %s %s\n",sx->arg0,sx->args);
-
         v = sx->xpcv;
         xfl_stagespawn(c,arqv,v);
 
         i = i + 1;
         sx = sx->next;
       }
-//printf("plenum: %d stages launched by parent\n",i);
-
-//  if (args != NULL) free(args);           /* see xfl_argcat() above */
-
-
-
-sleep(5);
 
     return 0;
   }

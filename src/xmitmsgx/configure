@@ -28,6 +28,12 @@ while [ ! -z "$*" ] ; do
         --prefix=*|--prefi=*|--pref=*)
             PREFIX=`echo "$1" | awk -F'=' '{print $2}'`
             ;;
+        --enable-static*)
+            :
+            ;;
+        --disable-shared*)
+            :
+            ;;
         -*)
             echo "$0: unrecognized option '$1'"
             exit 24

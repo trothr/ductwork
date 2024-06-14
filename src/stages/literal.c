@@ -1,7 +1,7 @@
 /*
  *
  *        Name: literal.c (C program source)
- *              Ductwork LITERAL stage
+ *              POSIX Pipelines LITERAL stage
  *        Date: 2023-06-09 (Friday) Gallatin
  *              2023-06-27 (Tuesday) Belle Pre
  *              sends the argument string to next stage via xfl_output()

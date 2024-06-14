@@ -1,7 +1,7 @@
 /*
  *
  *        Name: strliteral.c (C program source)
- *              Ductwork STRLITERAL stage
+ *              POSIX Pipelines STRLITERAL stage
  *        Date: 2024-01-15 (Monday, MLK) based on literal.c
  *              sends the argument string to next stage via xpl_output()
  *              and then passes all input records to the output

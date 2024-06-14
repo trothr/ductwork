@@ -1,6 +1,7 @@
 /*
  *
  *        Name: cp.c (C program source)
+ *              POSIX Pipelines CP stage (z/VM Control Program)
  *        Date: 2024-06-05 (Wednesday) after email from Sir Rob
  *    See also: RXDIAGRC package
  *

@@ -1,7 +1,7 @@
 /*
  *
  *        Name: buffer.c (C program source)
- *              Ductwork BUFFER stage
+ *              POSIX Pipelines BUFFER stage
  *        Date: 2009-Mar-05
  *              reads all input records, holds them in memory,
  *              then writes them all out after input is severed
