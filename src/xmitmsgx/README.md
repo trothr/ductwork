@@ -1,6 +1,8 @@
 # xmitmsgx
 
-This folder has a subset of components needed from the XMITMSGX project.
+									<
+This folder has a subset of components from the XMITMSGX project
+needed for *this* project.
 
 ## xmitmsgx subset
 
