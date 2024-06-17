@@ -29,9 +29,6 @@ char *xmmprefix = PREFIX;
 /* static */ struct PIPECONN *xfl_pipeconn = NULL;
 /* static */ struct PIPESTAGE *xfl_pipestage = NULL;
 
-/* the following are still in development */
-int xfl_stageexec(char*,PIPECONN*[]);
-/* DELETE THE ABOVE ROUTINE */
 
 static int xfl_errno = XFL_E_NONE;
 static int xfl_dotrace = 0;
@@ -238,7 +235,7 @@ int xfl_stageexec(char*args,PIPECONN*pc[])
     setenv("PIPECONN",pipeconn,1);
 //system("sh -c set | grep PIPECONN");
 
-    sprintf(pipeprog,"stages/%s",verb);
+    sprintf(pipeprog,"stages/%s",verb);                    // DEPRECATED
     execv(pipeprog,argv);
 /*  execve(pipeprog,argv,NULL);                                       */
 
@@ -327,10 +324,9 @@ if (argc < 2) argv[1] = NULL;
 
     /* scan PIPEPATH for the stage of interest ($PREFIX/libexec/xfl)  */
     p = getenv("PIPEPATH"); if (p == NULL) p = "";
-//  if (*p == 0x00) p = PREFIX "/libexec/xfl";
-if (*p == 0x00) p = "stages"; // FIXME: remember to define PIPEPATH
+    if (*p == 0x00) p = PREFIX "/libexec/xfl";
+//  if (*p == 0x00) p = "stages"; // FIXME: remember to define PIPEPATH
     strncpy(pipepath,p,sizeof(pipepath)-1);
-// need to implement pipe path search <<<<<<<<<<<<<<<<
     p = q = pipepath;
     while (1)
       {
@@ -900,7 +896,7 @@ int xfl_sever(PIPECONN*pc)
 
 static struct PIPECONN *xfl_pc_common = NULL;
 
-int XFLVERS(char*b)
+int XFLVERSN(char*b)
   { /* return the version (numbers only) to the caller                */
     sprintf(b,"%d.%d.%d",
        (xfl_version>>24),

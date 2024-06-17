@@ -30,20 +30,23 @@ DLL             =       .so
 
 # we may later use CC, CXX, CPP, CPPFLAGS, and/or CXXFLAGS
 
+MKAR            =       $(AR) r
+
 ##### configuration #####
 
-DELIVERABLES    =       pipe$(EXE) libxfl$(LIB)
+STAGES          =       buffer command cons console cp fanin \
+                 filea filer filew literal locate nlocate strliteral var
 
-MKAR            =       $(AR) r
+DELIVERABLES    =       pipe$(EXE) libxfl$(LIB) libxfl$(DLL) xfllib$(OBJ) xmitmsgx$(OBJ)
 
 # identify targets without actual files to match
 .PHONY:         _default all clean distclean veryclean help \
-                libraries
+                libraries stages
 
 # first target serves as the default, but name it that way anyway
-_default:       $(DELIVERABLES)
+_default:       xmitmsgx$(OBJ) xfllib$(OBJ) stages.tag $(DELIVERABLES)
 
-all:            $(DELIVERABLES)
+all:            xmitmsgx$(OBJ) xfllib$(OBJ) stages.tag $(DELIVERABLES)
 
 # pseudo target to build static and shared libraries
 libraries:      libxfl$(LIB) libxfl$(DLL)
@@ -59,8 +62,8 @@ pipe$(OBJ):         makefile pipe.c
 
 #
 pipe$(EXE):     makefile pipe$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
-#		$(CC) $(LDFLAGS) -o pipe pipe$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
-		$(CC)            -o pipe pipe$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
+#               $(CC) $(LDFLAGS) -o pipe pipe$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
+                $(CC)            -o pipe pipe$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
 
 # fetch the source from GitHub
 xfllib.c:
@@ -68,35 +71,36 @@ xfllib.c:
 		wget $(PROJECTURL)/$@
 
 #
-xfllib$(OBJ):       xfllib.c xfl.h
+xfllib$(OBJ):       xfllib.c xfl.h xmitmsgx.h
 		@echo "$(MAKE): compiling the library ..."
 		$(CC) $(CFLAGS) -o xfllib$(OBJ) -c xfllib.c
 
 #
 libxfl$(LIB):   xfllib$(OBJ) xmitmsgx$(OBJ)
-		@echo "$(MAKE): building the library ..."
+		@echo "$(MAKE): building the static library ..."
 		@rm -f libxfl$(LIB)
-		$(MKAR) libxfl$(LIB) xfllib$(OBJ) xmitmsgx$(OBJ)
+                $(MKAR) libxfl$(LIB) xfllib$(OBJ) xmitmsgx$(OBJ)
 
 #
-libxfl$(DLL):   xfllib$(OBJ)
-#		$(CC) $(LDFLAGS) -shared -o libxfl$(DLL) xfllib$(OBJ)
-		$(CC) $(SHFLAGS) -o libxfl$(DLL) xfllib$(OBJ)
+libxfl$(DLL):   xfllib$(OBJ) xmitmsgx$(OBJ)
+                @echo "$(MAKE): building the shared library ..."
+		@rm -f libxfl$(DLL)
+                $(CC) $(SHFLAGS) -o libxfl$(DLL) xfllib$(OBJ) xmitmsgx$(OBJ)
 
 # fetch the source from GitHub
 xmitmsgx.h:
-		$(MAKE) -C xmitmsgx xmitmsgx.h
-		cp -p xmitmsgx/xmitmsgx.h .
+                $(MAKE) -C xmitmsgx xmitmsgx.h
+                cp -p xmitmsgx/xmitmsgx.h .
 
 #
 xmitmsgx$(OBJ):
-		$(MAKE) -C xmitmsgx xmitmsgx$(OBJ)
-		cp -p xmitmsgx/xmitmsgx$(OBJ) .
+                $(MAKE) -C xmitmsgx xmitmsgx$(OBJ)
+                cp -p xmitmsgx/xmitmsgx$(OBJ) .
 
 ##
 #libxmitmsgx$(LIB):
-#		$(MAKE) -C xmitmsgx libxmitmsgx$(LIB)
-#		cp -p xmitmsgx/libxmitmsgx$(LIB) .
+#               $(MAKE) -C xmitmsgx libxmitmsgx$(LIB)
+#               cp -p xmitmsgx/libxmitmsgx$(LIB) .
 
 #
 plenum$(OBJ):         makefile plenum.c
@@ -104,10 +108,23 @@ plenum$(OBJ):         makefile plenum.c
 
 #
 #plenum:           makefile plenum$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
-#		$(CC) $(LDFLAGS) -o plenum plenum$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
+#               $(CC) $(LDFLAGS) -o plenum plenum$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
 plenum$(EXE):   makefile plenum$(OBJ) libxfl$(LIB)
 #		$(CC) $(LDFLAGS) -o plenum plenum$(OBJ)
 		$(CC) -o plenum plenum$(OBJ) $(LDFLAGS)
+
+########################################################################
+# standard stages written mostly in C
+stages:         stages.tag
+
+#stages.tag:    libxfl$(LIB)
+stages.tag:     makefile xfllib$(OBJ) xmitmsgx$(OBJ)
+        echo $(STAGES) | xargs -n 1 | awk '{print "make " $$1 "$(OBJ)"}' \
+            | sh -c " cd stages ; xargs | make "
+        @touch stages.tag
+
+list-o-stages:
+        sh -c ' cd stages ; exec ls -d *.c ' | awk -F. '{print $$1}' > list-o-stages
 
 ########################################################################
 # Rexx support
@@ -118,13 +135,13 @@ xflrexx$(OBJ):      makefile xflrexx.c xfl.h
 #		cc    -fPIC     -o xflrexx.o     -c xflrexx.c -I/usr/opt/regina/include
 
 libxflrexx$(DLL):  xflrexx$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
-		$(CC) $(LDFLAGS) -shared -o libxflrexx$(DLL) xflrexx$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
-#		cc               -shared -o libxflrexx$(DLL) xflrexx.o     xfllib.o     xmitmsgx.o
+                $(CC) $(LDFLAGS) -shared -o libxflrexx$(DLL) xflrexx$(OBJ) xfllib$(OBJ) xmitmsgx$(OBJ)
+#               cc               -shared -o libxflrexx$(DLL) xflrexx.o     xfllib.o     xmitmsgx.o
 #               SHFLAGS
 
 ########################################################################
 # Java support (JNI)
-java:           xfljava.o
+java:           xfljava$(OBJ)
 
 com/casita/xfl:
 	        mkdir -p com
@@ -158,20 +175,24 @@ xfljava.o:      xfljava.c
 
 #
 # yeah, we need an "install" target
-install:        $(DELIVERABLES)
+install:        $(DELIVERABLES) stages.tag
 		@mkdir -p $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/include \
-		  $(PREFIX)/share/locale/$(LOCALE) $(PREFIX)/sbin # $(PREFIX)/src
-#		cp -p xmitmsg xmiterr $(PREFIX)/bin/.
-#		cp -p libxmitmsgx.a *.so $(PREFIX)/lib/.
-#		cp -p xmitmsgx.h $(PREFIX)/include/.
-#		cp -p xmitmsgx.msgs errno.msgs $(PREFIX)/share/locale/$(LOCALE)/.
-#		cp -p xmitmivp.sh $(PREFIX)/sbin/.
-
-#$(PREFIX)/share/locale/$(LOCALE)/$(APPLID).msgs
-#$(PREFIX)/share/locale/$(LOCALE)/$(APPLID).msgs
-#$(PREFIX)/lib/nls/msg/$(LOCALE)/$(APPLID).msgs
-#$(PREFIX)/lib/locale/$(LOCALE)/$(APPLID).msgs
-#$(PREFIX)/share/nls/$(LOCALE)/$(APPLID).msgs
+		  $(PREFIX)/share/locale/$(LOCALE) $(PREFIX)/sbin $(PREFIX)/libexec/xfl
+                cp -p pipe $(PREFIX)/bin/.
+                cp -p *$(LIB) *$(DLL) xfllib$(OBJ) xmitmsgx$(OBJ) $(PREFIX)/lib/.
+                cp -p xfl.h $(PREFIX)/include
+#
+                sh -c ' cd stages ; exec cp -p $(STAGES) $(PREFIX)/libexec/xfl/. '
+#
+                cp -p xfl.msgs $(PREFIX)/share/locale/$(LOCALE)/.
+# locale alternatives:
+#                              $(PREFIX)/share/locale/$(LOCALE)/$(APPLID).msgs
+#                              $(PREFIX)/lib/nls/msg/$(LOCALE)/$(APPLID).msgs
+#                              $(PREFIX)/lib/locale/$(LOCALE)/$(APPLID).msgs
+#                              $(PREFIX)/share/nls/$(LOCALE)/$(APPLID).msgs
+#
+#               cp -p ...something... $(PREFIX)/sbin/.
+#               cp -p ...something... $(PREFIX)/src/.
 
 #
 makefile:       makefile.in configure
@@ -190,15 +211,14 @@ configure:
 
 # reset things for a fresh build from source
 clean:
-#									.
-		rm -f *.o *.a *.so *.dylib *.rpm *.class \
+		rm -f *.o *.a *.so *.dylib *.rpm *.class stages.tag \
 		  *$(LIB) *$(DLL) *$(OBJ) pipe$(EXE) plenum$(EXE) cobstage$(EXE)
-		-$(MAKE) -C xmitmsgx clean
+                -$(MAKE) -C xmitmsgx clean
 		-$(MAKE) -C stages clean
 
 distclean:      clean
 		@rm -f configure.h configure.sh
-		-$(MAKE) -C xmitmsgx distclean
+                -$(MAKE) -C xmitmsgx distclean
 		-$(MAKE) -C stages distclean
 
 veryclean:      distclean

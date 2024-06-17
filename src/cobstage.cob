@@ -37,7 +37,7 @@
           Display 'POSIX Pipelines (XFL) demonstration stage in COBOL'.
 
 
-          call 'XFLVERS' using Version-String returning Result.
+          call 'XFLVERSN' using Version-String returning Result.
           Display 'POSIX Pipelines (XFL) version ' Version-String.
 
       * start with input record count of zero

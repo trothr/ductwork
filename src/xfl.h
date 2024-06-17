@@ -10,8 +10,8 @@
 
 #ifndef _XFLLIB_H
 
-//static char *_xfl_version = "XFL 0.7.6";
-#define  XFL_VERSION  (((0) << 24) + ((7) << 16) + ((6) << 8) + (0))
+//static char *_xfl_version = "XFL 0.8.4";
+#define  XFL_VERSION  (((0) << 24) + ((8) << 16) + ((4) << 8) + (0))
 //static int xfl_version = XFL_VERSION;
 
 /* the following mnemonics represent bits in the flag field           */

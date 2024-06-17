@@ -4,20 +4,17 @@
 #
 #
 
-E		=	
-O		=	.o
+EXE             =       
+OBJ             =       .o
 LIB             =       .a
 DLL             =       .so
-XOBJECTS	=	pipe$E
-LOBJECTS	=	ductwork$O stringup$O
-INCLUDES	=	ductwork.h
-LIBRARIES       =       libductwork$(LIB)
 
 CFLAGS          =       %CFLAGS% -I..
 PREFIX          =       %PREFIX%
 #LDFLAGS        =       %LDFLAGS% -L.. -lxfl -L../xmitmsgx -lxmitmsgx
 #LDFLAGS        =       %LDFLAGS% -L.. -lxfl -lxmitmsgx
-LDFLAGS         =       %LDFLAGS% -L.. -lxfl
+#LDFLAGS        =       %LDFLAGS% -L.. -lxfl
+LDFLAGS         =       ../xfllib$(OBJ) ../xmitmsgx$(OBJ) %LDFLAGS%
 SHFLAGS         =       %SHFLAGS%
 
 .PHONY:  clean distclean veryclean help \
@@ -29,22 +26,23 @@ _default:
 all allstages:
 #	@ls *.c | sed 's#\.c##' | xargs -n 1 $(MAKE)
 	-@for F in ` ls *.c | sed 's#\.c##' ` ; do \
-	  echo "+ $(CC) $(CFLAGS) -o $$F$O -c $$F.c" ; \
-	          $(CC) $(CFLAGS) -o $$F$O -c $$F.c ; \
-	  echo "+ $(CC) -o $$F $$F$O $(LDFLAGS)" ; \
-	          $(CC) -o $$F $$F$O $(LDFLAGS) ; \
+	  echo "+ $(CC) $(CFLAGS) -o $$F$(OBJ) -c $$F.c" ; \
+	          $(CC) $(CFLAGS) -o $$F$(OBJ) -c $$F.c ; \
+	  echo "+ $(CC) -o $$F $$F$(OBJ) $(LDFLAGS)" ; \
+	          $(CC) -o $$F $$F$(OBJ) $(LDFLAGS) ; \
 	    done
 
 #
-%$O:    makefile %.c
-	$(CC) $(CFLAGS) -o %$O -c %.c
+# compile the source to an object deck
+%$(OBJ):    %.c
+        $(CC) $(CFLAGS) -o $@ -c $<
 
-%:      makefile %$O
-#../xfllib.o ../xmitmsgx.o
-#	$(CC) $(CFLAGS) -o % %$O ../*$O ../xfllib.o ../xmitmsgx.o
-	$(CC) -o % %$O $(LDFLAGS)
+#
+# link the object deck with requisite libraries
+%:      %$(OBJ)
+	$(CC) -o $@ $< $(LDFLAGS)
 #	cc -o literal literal.o $(LDFLAGS)
-#../*$O ../xfllib.o ../xmitmsgx.o
+#../*$(OBJ) ../xfllib.o ../xmitmsgx.o
 
 #
 makefile:  makefile.in
@@ -53,7 +51,8 @@ makefile:  makefile.in
 	@false
 
 clean:
-	rm -f *.o *.a *.so *.dll *.exe *$O
+	rm -f *.o *.a *.so *.dylib *.dll *.exe *.class *.rpm \
+          *$(OBJ) *$(LIB) *$(DLL)
 	@ls *.c | sed 's#\.c##' | xargs rm -f
 
 distclean:  clean

@@ -5,7 +5,8 @@
  *              This is called the "launcher" because "dispatcher" is
  *              not the right term. On POSIX systems, we rely on the
  *              operating system kernel to do the actual dispatching.
- *        Date: week of the VM Workshop and I don't remember which year
+ *        Date: week of VM Workshop, I don't remember which year, 0.x.y
+ *              2024-06-21 (Friday) at the 2024 VM Workshop 1.0.0
  *
  * The logic is as follows:
  * - process Unix-style options as individual argv elements
@@ -21,6 +22,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <errno.h>
 
 #include <xfl.h>
 
@@ -29,14 +31,16 @@ extern struct PIPESTAGE *xfl_pipestage;
 
 int main(int argc,char*argv[])
   {
-    int rc, i, nullokay;
+    int rc, i, nullokay, snum, pnum, pend;
     char *arg0, *args, *p, *q, *r;
     char *escape, *endchar, *stagesep, *pipename, *dotrace;
-    char *msgv[2];
-    struct PIPECONN *pi, *px;
+    char *msgv[4], em[16];
+    struct PIPECONN *pi, *po, *px, *pp[3];
     int wpid, wstatus;
+    struct PIPESTAGE *sx;
 
     nullokay = 0;            /* null pipeline is *not* initially okay */
+    /* but if we get --version or similar then empty pipeline is okay */
 
     /* inherit defaults established by parent or by the user */
     escape = getenv("PIPEOPT_ESCAPE");             /* default is none */
@@ -48,8 +52,8 @@ int main(int argc,char*argv[])
 
     pipename = dotrace = "";
 
-    /* remeober argv[0] for use later */
-    arg0 = argv[0];
+    /* remember argv[0] for use later */
+    arg0 = msgv[0] = argv[0];
 
     while (argc > 1 && *argv[1] == '-')
       {
@@ -63,6 +67,7 @@ int main(int argc,char*argv[])
             sprintf(verstr,"%d.%d.%d",vv,rr,mm);
             msgv[1] = verstr;
             xfl_error(86,2,msgv,"PIP");    /* provide specific report */
+            /* not really an error but xfl_error() writes to FD2      */
             nullokay = 1; } else
         if (strcmp(argv[1],"--escape") == 0)                /* ESCAPE */
           { if (argc < 3) { printf("error\n"); return 1; }
@@ -153,13 +158,13 @@ int main(int argc,char*argv[])
     /* skip to first non-blank character after all options            */
     while ((*r == ' ' || *r == '\t') && *r != 0x00) r++;
 
-printf("escape='%s'\n",escape);   /* FIXME: --escape/ESCAPE should be xorc */
-printf("endchar='%s'\n",endchar);   /* FIXME: --endchar/ENDCHAR should be xorc */
-printf("separator='%s'\n",stagesep);   /* FIXME: --stagesep/STAGESEP should be xorc */
+//printf("escape='%s'\n",escape);   /* FIXME: --escape/ESCAPE should be xorc */
+//printf("endchar='%s'\n",endchar);   /* FIXME: --endchar/ENDCHAR should be xorc */
+//printf("separator='%s'\n",stagesep);   /* FIXME: --stagesep/STAGESEP should be xorc */
 
-printf("arg0='%s'\n",arg0);
-printf("argc=%d\n",argc);
-printf("args='%s'\n",r);
+//printf("arg0='%s'\n",arg0);
+//printf("argc=%d\n",argc);
+//printf("args='%s'\n",r);
     if (*p == 0x00)   /* if empty string then we have a null pipeline */
       { if (nullokay) return 0;
         xfl_error(12,2,msgv,"PIP");           /* 0012 E Null pipeline */
@@ -172,111 +177,17 @@ printf("args='%s'\n",r);
     msgv[1] = args;
     xfl_trace(3000,2,msgv,"PIP");
 
+    /* parse parse parse parse parse parse parse parse parse parse    */
+/* -- TOP OF PARSING ------------------------------------------------ */
 
-
-
-
-
-
-
-    /* shut it all down */
-
-    free(args);
-
-    /* remember to free the connectors too ... at least close FDs     */
-    px = xfl_pipeconn;
-    i = 0 ; while (px != NULL)
-      { i = i + 1;
-        close(px->fdf);
-        close(px->fdr);
-        pi = px;
-        px = px->next;
-        free(pi); }
-
-    /* wait for stages to complete */
-
-    while (1)
-      { rc = wpid = waitpid(-1,&wstatus,0);
-        if (rc < 1) break;
-        printf("pipe: stage with PID %d finished\n",wpid); }
-    if (rc < 0) perror("waitpid()");
-
-    return 0;
-  }
-
-
-/*
-label logic
-                  A:   -- labels a stream
-                  A: | -- connects labeled stage to an input
-                | A:   -- connects labeled stage to an output
-                | A: | -- is illegal
- */
-
-/* one pipeline with one stage:
-Ready;
-pipe foofum
-            msgv[1] = "FOOFUM";
-            xfl_error(27,2,msgv,"PIP"); 0027 E Entry point &1 not found
-FPLSCB027E Entry point FOOFUM not found
-            msgv[1] = "1";
-            msgv[2] = "1";
-            xfl_error(3,3,msgv,"PIP"); 0003 I ... Issued from stage &1 of pipeline &2
-FPLSCA003I ... Issued from stage 1 of pipeline 1
-            msgv[1] = "foofum";
-            xfl_error(1,2,msgv,"PIP"); 0001 I ... Running "&1"
-FPLSCA001I ... Running "foofum"
-Ready(-0027);
- */
-
-#ifdef OLDSTUFF
-
-#include <errno.h>                                                              // OLDSTUFF
-
-    sep = '|';                /* default stage separator is the usual */        // OLDSTUFF
-    end = 0x00;                   /* default end character is not set */        // OLDSTUFF
-
-#endif
-
-/*
-0059 E Logical record length &1 is not valid
-0183 E Output buffer overflow; &1 required
-0093 E Pipeline not installed as a nucleus extension; use PIPE command (BASH extension)
-0050 E Not a character or hexadecimal representation: &1
- */
-
-/*****************************************************************************/
-
-#ifdef _TO_MERGE
-
-/*
-extern struct PIPECONN *xfl_pipeconn;
-extern struct PIPESTAGE *xfl_pipestage;
- */
-
-/* ------------------------------------------------------------------ */
-int main(int argc,char*argv[])
-  {
-    int rc, snum, pnum, pend, i;
-    char *args, *p, *q, *msgv[16];
-    struct PIPECONN *pp[3], *pi, *po, *px;
-    struct PIPESTAGE *sx;
-    int wpid, wstatus;
-
-
-
-
-    /* start with some defaults */
-    stagesep = '|'; streamsep = '!'; snum = pnum = 1;
-    p = q = args;
+    p = q = r;
     pp[0] = pp[1] = pp[2] = px = NULL;    /* start with no connectors */
-
 
     /* step through the pipeline specification string                 */
     while (*p != 0x00)
       {
-        while (*p != 0x00 && *p != stagesep && *p != streamsep) p++;
-        /* we have a stage ... might be the only one ... or a stream end */
+        while (*p != 0x00 && *p != *stagesep && *p != *endchar) p++;
+        /* we have a stage ... might be only one ... or a stream end  */
 
         pi = pp[0];         /* input here is output of previous stage */
                                  /* it's the read side of the PC pair */
@@ -284,13 +195,13 @@ if (pi != NULL && px == NULL) px = pi;      /* not sure this is right */
 
 pend = 0;
 
-        if (*p == stagesep)   /* we have a follow-on stage, get ready */
+        if (*p == *stagesep)          /* we do have a follow-on stage */
           {
             *p++ = 0x00;                 /* terminate this sub-string */
             xfl_pipepair(pp);        /* get a new connector pair pp[] */
             po = pp[1];     /* our output is next's input (write end) */
           } else {            /* we are the last stage in this stream */
-            if (*p && (*p == streamsep))
+            if (*p && (*p == *endchar))
               { /* the following three need to be done AFTER stage stacking */
                 pend = 1;
                 pnum = pnum + 1;            /* bump the stream number */
@@ -369,7 +280,7 @@ if (*v0 && *v1) printf("plenum: ERROR: multiple commands on a stage\n");
           }
 
 
-        stagetot++;                    /* bump stagenum for reporting */
+//      stagetot++;                    /* bump stagenum for reporting */
         if (pend)       /* if end of stream then prep for next stream */
           {
                 snum = 1;                   /* reset the stage number */
@@ -378,14 +289,12 @@ if (*v0 && *v1) printf("plenum: ERROR: multiple commands on a stage\n");
         else    snum = snum + 1;      /* bump stagenum for next cycle */
         q = p;    /* set q to point to next, if any */
       }
-//printf("\n");           /* development */
-//printf("plenum: total stages %d (%d final)\n",stagetot,snum);
-//printf("plenum: total streams %d\n",pnum);
 
 /* -- END OF PARSING ------------------------------------------------ */
+    /* parse parse parse parse parse parse parse parse parse parse    */
 
     /* be sure that stages won't get whacked by SIGPIPE on connectors */
-    signal(SIGCHLD,SIG_IGN);
+//  signal(SIGCHLD,SIG_IGN);
 
     /* launch all stacked/queued stages */
     i = 0; sx = xfl_pipestage;
@@ -405,11 +314,111 @@ if (*v0 && *v1) printf("plenum: ERROR: multiple commands on a stage\n");
 //      po = sx->opcv[0];   /* po */
 
         v = sx->xpcv;
-        xfl_stagespawn(c,arqv,v);
+        xfl_stagespawn(c,arqv,v,sx);
 
         i = i + 1;
         sx = sx->next;
       }
+
+    /* shut it all down */
+
+    free(args);
+
+    /* remember to free the connectors too ... at least close FDs     */
+    px = xfl_pipeconn;
+    i = 0 ; while (px != NULL)
+      { i = i + 1;
+        close(px->fdf);
+        close(px->fdr);
+        pi = px;
+        px = px->next;
+        free(pi); }
+
+
+    /* wait for stages to complete */
+    while (1)
+      { rc = wpid = waitpid(-1,&wstatus,0);
+        if (rc < 1) break;
+
+//      printf("pipe: stage with PID %d finished\n",wpid);
+
+        sprintf(em,"%d",wpid);
+        msgv[1] = em;
+//      xfl_error(3099,2,msgv,"PIP");
+        xfl_trace(3099,2,msgv,"PIP"); }
+
+    if (rc < 0 && errno != ECHILD) perror("waitpid()");
+
+    return 0;
+  }
+
+
+/*
+label logic
+                  A:   -- labels a stream
+                  A: | -- connects labeled stage to an input
+                | A:   -- connects labeled stage to an output
+                | A: | -- is illegal
+ */
+
+/* one pipeline with one stage:
+Ready;
+pipe foofum
+            msgv[1] = "FOOFUM";
+            xfl_error(27,2,msgv,"PIP"); 0027 E Entry point &1 not found
+FPLSCB027E Entry point FOOFUM not found
+            msgv[1] = "1";
+            msgv[2] = "1";
+            xfl_error(3,3,msgv,"PIP"); 0003 I ... Issued from stage &1 of pipeline &2
+FPLSCA003I ... Issued from stage 1 of pipeline 1
+            msgv[1] = "foofum";
+            xfl_error(1,2,msgv,"PIP"); 0001 I ... Running "&1"
+FPLSCA001I ... Running "foofum"
+Ready(-0027);
+ */
+
+#ifdef OLDSTUFF
+
+#include <errno.h>                                                              // OLDSTUFF
+
+    sep = '|';                /* default stage separator is the usual */        // OLDSTUFF
+    end = 0x00;                   /* default end character is not set */        // OLDSTUFF
+
+#endif
+
+/*
+0059 E Logical record length &1 is not valid
+0183 E Output buffer overflow; &1 required
+0093 E Pipeline not installed as a nucleus extension; use PIPE command (BASH extension)
+0050 E Not a character or hexadecimal representation: &1
+ */
+
+/*****************************************************************************/
+/*****************************************************************************/
+/*****************************************************************************/
+
+#ifdef _TO_MERGE
+
+/*
+extern struct PIPECONN *xfl_pipeconn;
+extern struct PIPESTAGE *xfl_pipestage;
+ */
+
+/* ------------------------------------------------------------------ */
+int main(int argc,char*argv[])
+  {
+//  char *args, *p, *q, *msgv[16];
+//  int wpid, wstatus;
+
+
+
+
+    /* start with some defaults */
+//                                   snum = pnum = 1;
+
+
+/* -- END OF PARSING ------------------------------------------------ */
+
 
     return 0;
   }
