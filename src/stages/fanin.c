@@ -6,10 +6,10 @@
  *              reads all input records, holds them in memory,
  *              then writes them all out after input is severed
  *
- * From the help for CMS Pipelines 'FANIN',
-   "fanin" passes all records on the primary input stream to the
-   primary output stream, then all records on the secondary input
-   stream to the primary output stream, and so on.
+ * (from CMS HELP PIPE FANIN)
+ * "fanin" passes all records on the primary input stream to the
+ * primary output stream, then all records on the secondary input
+ * stream to the primary output stream, and so on.
  */
 
 #include <stdio.h>

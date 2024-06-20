@@ -210,7 +210,6 @@ int xfl_stageexec(char*args,PIPECONN*pc[])
     while (*args != 0x00 && *args != ' ' && *args != '\t') args++;
     if (*args != 0x00) *args++ = 0x00;
 
-//if (args != NULL && *args != 0x00)
     argv[0] = verb;
     argv[1] = args;
     argv[2] = NULL;
@@ -220,20 +219,15 @@ int xfl_stageexec(char*args,PIPECONN*pc[])
     po = pc[1];
     if (pi != NULL)
       {
-//      printf("*.INPUT:%d,%d\n",pi->fdf,pi->fdr);
         rc = sprintf(p,"*.INPUT:%d,%d ",pi->fdf,pi->fdr);
-//      if (rc < 0) ...
         p = &p[rc];
       }
     if (po != NULL)
       {
         printf("*.OUTPUT:%d,%d\n",po->fdf,po->fdr);
-//      rc = sprintf(p,"*.OUTPUT:%d,%d ",po->fdf,po->fdr);
-//      if (rc < 0) ...
         p = &p[rc];
       }
     setenv("PIPECONN",pipeconn,1);
-//system("sh -c set | grep PIPECONN");
 
     sprintf(pipeprog,"stages/%s",verb);                    // DEPRECATED
     execv(pipeprog,argv);
@@ -254,7 +248,7 @@ int xfl_stagespawn(int argc,char*argv[],PIPECONN*pc[],PIPESTAGE*sx)
   /* pc   - pipe connector(s) this stage will use (input and output)  */
   { static char _eyecatcher[] = "xfl_stagespawn()";
     int rc, i, ii, io;
-    char *p, *q, envbuf[8192], tmpbuf[256], pipepath[8192];
+    char *p, *q, envbuf[8192], tmpbuf[256], pipepath[8192], *verb;
     PIPECONN *px;
     struct stat sb;
 
@@ -334,7 +328,15 @@ if (argc < 2) argv[1] = NULL;
         while (*p != 0x00 && *p != ':') p++;
         if (*p != 0x00) *p++ = 0x00;
 
-        snprintf(tmpbuf,sizeof(tmpbuf),"%s/%s",q,argv[0]);   /* looking for arg0 */
+        verb = argv[0];
+
+        /* magical file syntax fixup */
+        if (strcmp(verb,"<") == 0) verb = "filer";
+        if (strcmp(verb,">") == 0) verb = "filew";
+        if (strcmp(verb,">>") == 0) verb = "filea";
+        /* magical file syntax fixup */
+
+        snprintf(tmpbuf,sizeof(tmpbuf),"%s/%s",q,verb);   /* looking for arg0 */
         rc = stat(tmpbuf,&sb);
         if (rc == 0) break;       /* found it! break out with success */
         if (*p == 0x00) break;  /* if end of string break out failing */
@@ -670,6 +672,7 @@ int xfl_peekto(PIPECONN*pc,void*buffer,int buflen)
 
     /* convert integer string into a binary integer */
 //  if (*infobuff is non-digit) then set this connector to close
+if (*infobuff == 0x00) return -1;    // FIXME: also set an errno
 
     if (isdigit(*infobuff))
     reclen = atoi(infobuff);

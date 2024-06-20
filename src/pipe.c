@@ -179,6 +179,9 @@ int main(int argc,char*argv[])
 
     /* parse parse parse parse parse parse parse parse parse parse    */
 /* -- TOP OF PARSING ------------------------------------------------ */
+    /* parse parse parse parse parse parse parse parse parse parse    */
+
+    /* NOTE: this "parsing" section needs to be moved to the library  */
 
     p = q = r;
     pp[0] = pp[1] = pp[2] = px = NULL;    /* start with no connectors */
@@ -290,6 +293,7 @@ if (*v0 && *v1) printf("plenum: ERROR: multiple commands on a stage\n");
         q = p;    /* set q to point to next, if any */
       }
 
+    /* parse parse parse parse parse parse parse parse parse parse    */
 /* -- END OF PARSING ------------------------------------------------ */
     /* parse parse parse parse parse parse parse parse parse parse    */
 
@@ -307,6 +311,7 @@ if (*v0 && *v1) printf("plenum: ERROR: multiple commands on a stage\n");
         a = sx->args;
         if (a != NULL && *a != 0x00) c = 2; else c = 1;
         arqv[0] = sx->arg0;
+
         arqv[1] = sx->args;
         arqv[2] = NULL;
 
@@ -352,16 +357,23 @@ if (*v0 && *v1) printf("plenum: ERROR: multiple commands on a stage\n");
     return 0;
   }
 
-
 /*
+
 label logic
                   A:   -- labels a stream
                   A: | -- connects labeled stage to an input
                 | A:   -- connects labeled stage to an output
                 | A: | -- is illegal
- */
 
-/* one pipeline with one stage:
+    sep = '|';                // default stage separator is the usual **
+    end = 0x00;                   // default end character is not set **
+
+0059 E Logical record length &1 is not valid
+0183 E Output buffer overflow; &1 required
+0093 E Pipeline not installed as a nucleus extension; use PIPE command (BASH extension)
+0050 E Not a character or hexadecimal representation: &1
+
+** one pipeline with one stage:
 Ready;
 pipe foofum
             msgv[1] = "FOOFUM";
@@ -375,54 +387,7 @@ FPLSCA003I ... Issued from stage 1 of pipeline 1
             xfl_error(1,2,msgv,"PIP"); 0001 I ... Running "&1"
 FPLSCA001I ... Running "foofum"
 Ready(-0027);
+
  */
-
-#ifdef OLDSTUFF
-
-#include <errno.h>                                                              // OLDSTUFF
-
-    sep = '|';                /* default stage separator is the usual */        // OLDSTUFF
-    end = 0x00;                   /* default end character is not set */        // OLDSTUFF
-
-#endif
-
-/*
-0059 E Logical record length &1 is not valid
-0183 E Output buffer overflow; &1 required
-0093 E Pipeline not installed as a nucleus extension; use PIPE command (BASH extension)
-0050 E Not a character or hexadecimal representation: &1
- */
-
-/*****************************************************************************/
-/*****************************************************************************/
-/*****************************************************************************/
-
-#ifdef _TO_MERGE
-
-/*
-extern struct PIPECONN *xfl_pipeconn;
-extern struct PIPESTAGE *xfl_pipestage;
- */
-
-/* ------------------------------------------------------------------ */
-int main(int argc,char*argv[])
-  {
-//  char *args, *p, *q, *msgv[16];
-//  int wpid, wstatus;
-
-
-
-
-    /* start with some defaults */
-//                                   snum = pnum = 1;
-
-
-/* -- END OF PARSING ------------------------------------------------ */
-
-
-    return 0;
-  }
-
-#endif
 
 

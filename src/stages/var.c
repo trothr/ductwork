@@ -12,7 +12,8 @@
  * input record and then passes all input to the output.
  *
  * This stage runs as a program.
- * Setting the variable is of no use unless there are child processes.
+ * Setting the variable has no effect unless there are child processes
+ * or there is some way to communicate with the parent/calling process.
  *
  * Unlike the CMS counterpart, this stage only recognizes one argument
  * the name of the variable.
@@ -29,36 +30,21 @@
 int main(int argc,char*argv[])
   { static char _eyecatcher[] = "pipeline stage 'var' main()";
     int rc, l;
-    char *p, *q, *args, var[256], *val;
+    char *p, *q, *args, var[256], *val, *msgv[4], em[16];
     struct PIPECONN *pc, *pi, *po, *pn;
 
     /* initialize this stage                                          */
     rc = xfl_stagestart(&pc);
-    if (rc < 0) return 1;
+    if (rc < 0)
+      { /* 0303 E Return code &1 from &2                              */
+        sprintf(em,"%d",rc); msgv[1] = em;       /* integer to string */
+        msgv[1] = "xfl_stagestart()"; /* identify the failing routine */
+        xfl_error(303,4,msgv,"VMC");   /* provide XFL specific report */
+        return 1; }    /* this amounts to an exit - proess terminates */
 
-    /* string-up the command line arguments, caller must free this    */
+    /* string-up the command line arguments .. remember free() below  */
     args = xfl_argcat(argc,argv);
     if (args == NULL) return 1;
-
-printf("1 %s\n",args);
-
-    /* find the variable name in the input argument string            */
-    p = args; while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
-printf("2 %s\n",p);
-
-    /* now mark the END of the variable name in the arg string        */
-    q = p; while (*q != ' ' && *q != '\t' && *p != 0x00) q++; *q = 0x00;
-printf("3 %s\n",p);
-
-    /* now copy the variable name to its own buffer                   */
-    strncpy(var,p,sizeof(var)-1); var[sizeof(var)-1] = 0x00;
-
-printf("4 %s\n",var);
-
-    /* remember to free the strung-up arguments buffer                */
-    free(args);
-
-printf("var: good so far\n");
 
     /* snag the first input stream and the first output stream        */
     pi = po = NULL;
@@ -66,61 +52,43 @@ printf("var: good so far\n");
       { if (pn->flag & XFL_F_OUTPUT) { if (po == NULL) po = pn; }
         if (pn->flag & XFL_F_INPUT)  { if (pi == NULL) pi = pn; } }
 
-    /* read input and set the variable */
-    if (pi != NULL)
-      {
-//      set the variable based on the first record
-//      setenv();
+    /* find the variable name in the input argument string            */
+    p = args; while ((*p == ' ' || *p == '\t') && *p != 0x00) p++;
 
-//      and loop on all other records
-      }
-    /* read the variable and write its value downstream */
-    else
+    /* now mark the END of the variable name in the arg string        */
+    q = p; while (*q != ' ' && *q != '\t' && *p != 0x00) q++; *q = 0x00;
+
+    /* now copy the variable name to its own buffer                   */
+    strncpy(var,p,sizeof(var)-1); var[sizeof(var)-1] = 0x00;
+
+    /* remember to free the strung-up arguments buffer                */
+    free(args);
+
+    /* if first stage then read the variable and write its value      */
+    if (pi == NULL)
       {
         /* get the value of this variable */
         val = getenv(var);
 
-        /* upcase the variable name and try again */
+        /* if failed then upcase the variable name and try again      */
         if (val == NULL || *val == 0x00)
           { for (p = var; *p != 0x00; p++) *p = toupper(*p);
             val = getenv(var); }
 
-        /* write the literal string to our primary output stream          */
+        /* write the literal string to our primary output stream      */
         if (val == NULL) val = "";
         l = strlen(val);
-printf("hello? %d '%s'\n",l,val);
         rc = xfl_output(po,val,l);
-        if (rc < 0) return 1;
       }
-
-    /* terminate this stage cleanly                                   */
-    rc = xfl_stagequit(pc);
-    if (rc < 0) return 1;
-
-    return 0;
-  }
-
-
-/////////////////////////////////
-/*
- *
- *
- */
-
-
-
-
-#ifdef EXTRA
-    int i, buflen, rc, argl;
-    char buffer[4096], *p, *q, *args;
-
-
-
 
     /* proper pipeline: once we have written the literal to the       *
      * output, we then copy all input records, if any, to the output  */
-    if (pi != NULL) while (1)
+    else if (po != NULL) while (1)
       {
+/*      ideally we would set the variable based on the first record   */
+/*      e.g., setenv(), but talking to an interpreter                 */
+/*      but that can't happen without special arrangements            */
+
         /* perform a PEEKTO and see if there is a record ready        */
         buflen = sizeof(buffer) - 1;
         rc = xfl_peekto(pi,buffer,buflen);            /* sip on input */
@@ -133,8 +101,19 @@ printf("hello? %d '%s'\n",l,val);
         /* now consume the record from the input stream               */
         rc = xfl_readto(pi,NULL,0);             /* consume the record */
         if (rc < 0) break;
+
       }
+
+//  if (rc < 0) return 1;
+
+    /* terminate this stage cleanly                                   */
+    rc = xfl_stagequit(pc);
     if (rc < 0) return 1;
-#endif
+
+    return 0;
+  }
+
+//  int i, buflen, rc, argl;
+//  char buffer[4096], *p, *q, *args;
 
 
