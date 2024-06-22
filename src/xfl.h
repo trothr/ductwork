@@ -1,17 +1,17 @@
 /*
- *
  *        Name: xfl.h (C program header)
- *        Date: 2023-06-12 (Mon) roughly, 2024-01-07 (Sun)
+ *        Date: 2023-06-12 (Mon) roughly
+ *              2024-01-07 (Sun)
+ *              2024-06-21 (Fri)
  *
  * Prefix XFL* has been assigned to the Ductwork/Plenum project by IBM.
  * Please keep IBM informed so that they can update the prefix database.
- *
  */
 
 #ifndef _XFLLIB_H
 
-//static char *_xfl_version = "XFL 0.8.4";
-#define  XFL_VERSION  (((0) << 24) + ((8) << 16) + ((4) << 8) + (0))
+//static char *_xfl_version = "XFL 0.9.1";
+#define  XFL_VERSION  (((0) << 24) + ((9) << 16) + ((1) << 8) + (0))
 //static int xfl_version = XFL_VERSION;
 
 /* the following mnemonics represent bits in the flag field           */
