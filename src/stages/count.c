@@ -1,5 +1,4 @@
 /*
- *
  *        Name: count.c (C program source)
  *              POSIX Pipelines COUNT stage
  *        Date: 2024-06-18 (Tue)

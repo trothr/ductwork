@@ -1,5 +1,4 @@
 /*
- *
  *        Name: strliteral.c (C program source)
  *              POSIX Pipelines STRLITERAL stage
  *        Date: 2024-01-15 (Monday, MLK) based on literal.c
@@ -7,7 +6,6 @@
  *              and then passes all input records to the output
  *              looping over xpl_peekto(), xpl_output(), xpl_readto(),
  *              to not delay records
- *
  */
 
 #include <stddef.h>

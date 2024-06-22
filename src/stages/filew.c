@@ -1,11 +1,8 @@
 /*
- *
  *        Name: filew.c (C program source)
  *              POSIX Pipelines FILEW stage (file write)
  *        Date: 2024-05-28 (Tue) taking a break from Rexx development
  *              This stage reads records and writes a file.
- *
- *
  */
 
 #include <fcntl.h>

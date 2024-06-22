@@ -1,5 +1,4 @@
 /*
- *
  *        Name: var.c (C program source)
  *              POSIX Pipelines VAR stage
  *        Date: 2024-05-15 (Wednesday)
@@ -29,8 +28,8 @@
 /* ------------------------------------------------------------------ */
 int main(int argc,char*argv[])
   { static char _eyecatcher[] = "pipeline stage 'var' main()";
-    int rc, l;
-    char *p, *q, *args, var[256], *val, *msgv[4], em[16];
+    int rc, l, buflen;
+    char *p, *q, *args, var[256], *val, *msgv[4], em[16], buffer[4096];
     struct PIPECONN *pc, *pi, *po, *pn;
 
     /* initialize this stage                                          */

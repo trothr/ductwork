@@ -1,11 +1,8 @@
 /*
- *
  *        Name: cms.c (C program source)
  *              POSIX Pipelines CMS stage
  *        Date: 2024-06-05 (Wednesday) after email from Sir Rob
  *              There is no CMS environment available in this context.
- *
- *
  */
 
 #include <stdio.h>

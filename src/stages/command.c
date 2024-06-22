@@ -1,11 +1,9 @@
 /*
- *
  *        Name: command.c (C program source)
  *              POSIX Pipelines COMMAND stage
  *        Date: 2024-05-12
  *              runs commands on the host system,
  *              much like the COMMAND stage in CMS Pipelines.
- *
  */
 
 #include <stdio.h>

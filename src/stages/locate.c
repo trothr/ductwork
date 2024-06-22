@@ -1,10 +1,7 @@
 /*
- *
  *        Name: locate.c (C program source)
  *              POSIX Pipelines LOCATE stage
  *        Date: 2024-05-29 (Wed)
- *
- *
  */
 
 #include <stddef.h>

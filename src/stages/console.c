@@ -1,5 +1,4 @@
 /*
- *
  *        Name: console.c (C program source)
  *              POSIX Pipelines CONSOLE stage
  *        Date: 2010-Mar-24, 2023-07, 2024

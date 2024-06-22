@@ -1,5 +1,4 @@
 /*
- *
  *        Name: fanin.c (C program source)
  *              POSIX Pipelines FANIN stage
  *        Date: 2024-05-05

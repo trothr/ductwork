@@ -1,11 +1,8 @@
 /*
- *
  *        Name: filer.c (C program source)
  *              POSIX Pipelines FILER stage (file read)
  *        Date: 2024-05-20 (Mon) taking a break from Rexx development
  *              This stage reads a file and writes records downstream.
- *
- *
  */
 
 #include <fcntl.h>

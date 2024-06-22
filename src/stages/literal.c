@@ -1,5 +1,4 @@
 /*
- *
  *        Name: literal.c (C program source)
  *              POSIX Pipelines LITERAL stage
  *        Date: 2023-06-09 (Friday) Gallatin
@@ -8,7 +7,6 @@
  *              and then passes all input records to the output
  *              looping over xfl_peekto(), xfl_output(), xfl_readto(),
  *              to not delay records
- *
  */
 
 #include <stdlib.h>
