@@ -443,8 +443,8 @@ int xfl_getpipepart(PIPESTAGE**ps,char*l)
             /* if this struct has the label then its the one we want  */
             if(strcmp(m,l) == 0)
               {
-printf("xfl_getpipepart(): re-using '%s'\n",l);         // 3047
-printf("xfl_getpipepart(): arg0 '%s' args '%s'\n",pst->arg0,pst->args);   // 3027
+//printf("xfl_getpipepart(): re-using '%s'\n",l);         // 3047
+//printf("xfl_getpipepart(): arg0 '%s' args '%s'\n",pst->arg0,pst->args);   // 3027
                 *ps = pst;
                 return 0;
               }

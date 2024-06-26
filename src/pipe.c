@@ -104,6 +104,7 @@ int main(int argc,char*argv[])
     p = args;
     while ((*p == ' ' && *p == '\t') && *p != 0x00) p++;
     r = p;
+//printf("pipe: pipeline '%s'\n",p);
 
     /* if we have CMS-style options then process them here and now    */
     if (*p == '(')
@@ -157,6 +158,7 @@ int main(int argc,char*argv[])
       }
     /* skip to first non-blank character after all options            */
     while ((*r == ' ' || *r == '\t') && *r != 0x00) r++;
+    p = r;
 
 //printf("escape='%s'\n",escape);   /* FIXME: --escape/ESCAPE should be xorc */
 //printf("endchar='%s'\n",endchar);   /* FIXME: --endchar/ENDCHAR should be xorc */
@@ -174,7 +176,8 @@ int main(int argc,char*argv[])
     if (*dotrace != 0x00) setenv("PIPEOPT_TRACE",dotrace,1);
 
     /* now parse the duly derived pipeline                            */
-    msgv[1] = args;
+//  msgv[1] = args;
+    msgv[1] = r;
     xfl_trace(3000,2,msgv,"PIP");
 
     /* parse parse parse parse parse parse parse parse parse parse    */
@@ -249,6 +252,7 @@ pend = 0;
 
         /* get a new struct for this stage */
         xfl_getpipepart(&ps,l);
+//printf("pipe: label: %s\n",l);
 if (ps == NULL) printf("error\n");
 
               {
