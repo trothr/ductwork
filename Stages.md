@@ -49,12 +49,12 @@ into a single output.
 
 * filer, aliased as "&lt;"
 
-Use `&lt;` to read from a file.
+Use `<` to read from a file.
 
 
 * filew, aliased as "&gt;"
 
-Use `&gt;` to write to a file.
+Use `>` to write to a file.
 
 
 * literal
