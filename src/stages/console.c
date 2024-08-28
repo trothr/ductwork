@@ -89,4 +89,24 @@ int main(int argc,char*argv[])
     return 0;
   }
 
+/*
+//MD
+//MD* console
+//MD
+//MDThe `console` stage is so named for compatibility with CMS/TSO Pipelines.
+//MDIn POSIX Pipelines, `console` serves as a gateway between shell pipes and POSIX Pipelines stages.
+//MD
+//MDWhen `console` is the first stage of a pipeline, it reads lines of text from file descriptor zero (0)
+//MDdelimited by newline characters. In this mode, its output must be connected
+//MDto another POSIX Pipelines stage and its output is records with newline characters removed.
+//MDOutput records are bounded where newlines occur on input.
+//MD
+//MDWhen `console` is NOT the first stage of a pipeline,
+//MDits input must be connected to another POSIX Pipelines stage. It then reads input records
+//MDand writes to file descriptor one (1) with newline characters appended to each line.
+//MDIn this mode, `console` may also be connected on output to a following POSIX Pipelines stage
+//MDto which it will write the input records unaltered. (No newline inserted.)
+//MD
+ */
+
 

@@ -17,6 +17,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <xfl.h>
 
 #define  XFL_COUNT_CHARS  1

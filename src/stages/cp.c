@@ -196,4 +196,17 @@ int main(int argc,char*argv[])
     return 0;
   }
 
+/*
+//MD
+//MD* cp
+//MD
+//MDUse the `cp` stage to issue VM (CP) commands and recover their output.
+//MD
+//MDThis stage requires the z/VM hypervisor.
+//MDIt really only works on z/Linux when hosted by z/VM.
+//MD
+//MDThis stage requires privileges. Usually, one must be root to issue CP commands.
+//MD
+ */
+
 

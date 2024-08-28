@@ -79,4 +79,12 @@ int main(int argc,char*argv[])
     return 0;
   }
 
+/*
+//MD
+//MD* strliteral
+//MD
+//MDUse the `strliteral` stage to insert a line of literal text into a stream.
+//MD
+ */
+
 

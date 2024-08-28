@@ -45,13 +45,21 @@ all allstages:
 #../*$(OBJ) ../xfllib.o ../xmitmsgx.o
 
 #
+# markdown file describing the supplied stages
+Stages.md:      Stages.head.md.in Stages.tail.md.in makefile
+	cat < Stages.head.md.in > Stages.tmp
+	grep '//MD' *.c | awk -F: '{print $$2}' | sed 's#^//MD##' >> Stages.tmp
+	cat < Stages.tail.md.in >> Stages.tmp
+	mv Stages.tmp Stages.md
+
+#
 makefile:  makefile.in
 	@echo "$(MAKE): makefile is out of synch"
 	@echo "$(MAKE): you need to re-run ./configure"
 	@false
 
 clean:
-	rm -f *.o *.a *.so *.dylib *.dll *.exe *.class *.rpm \
+	rm -f *.o *.a *.so *.dylib *.dll *.exe *.class *.rpm *.tmp \
           *$(OBJ) *$(LIB) *$(DLL)
 	@ls *.c | sed 's#\.c##' | xargs rm -f
 

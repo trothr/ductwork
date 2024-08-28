@@ -89,4 +89,12 @@ int main(int argc,char*argv[])
     return 0;
   }
 
+/*
+//MD
+//MD* locate
+//MD
+//MDUse the `locate` stage to find occurrences of the specified string in the input stream.
+//MD
+ */
+
 

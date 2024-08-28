@@ -95,4 +95,13 @@ int main(int*arg,char*argv[])
     return 0;
   }
 
+/*
+//MD
+//MD* buffer
+//MD
+//MDUse the `buffer` stage to hold all input records
+//MDuntil the source stage terminates.
+//MD
+ */
+
 

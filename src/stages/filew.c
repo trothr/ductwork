@@ -97,4 +97,12 @@ int main(int argc,char*argv[])
     return 0;
   }
 
+/*
+//MD
+//MD* filew (file write), aliased as "&gt;"
+//MD
+//MDUse `>` to write to a file.
+//MD
+ */
+
 

@@ -110,4 +110,13 @@ printf("fanin: (normal exit)\n");
     return 0;
   }
 
+/*
+//MD
+//MD* fanin
+//MD
+//MDUse the `fanin` stage to collect multiple input streams
+//MDinto a single output.
+//MD
+ */
+
 

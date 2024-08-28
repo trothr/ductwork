@@ -16,7 +16,7 @@
 int main(int argc,char*argv[])
   { static char _eyecatcher[] = "pipeline stage 'filer' main()";
     int rc, fd, buflen, i, j, k, l;
-    char *args, *fn, *p, *q, *r, buffer[4096], *msgv[16];
+    char *args, *fn, *p, *q, *r, buffer[65536], *msgv[16];
     struct PIPECONN *pc, *pi, *po, *pn;
 
     /* initialize this stage                                          */
@@ -122,5 +122,13 @@ printf("RC %d\n",rc);
 
     return 0;
   }
+
+/*
+//MD
+//MD* filer (file read), aliased as "&lt;"
+//MD
+//MDUse `<` to read from a file.
+//MD
+ */
 
 

@@ -69,9 +69,7 @@ int main(int argc,char*argv[])
 
         /* now consume the record from the input stream               */
         xfl_readto(pi,NULL,0);                  /* consume the record */
-        if (rc < 0) break;
       }
-    if (rc < 0) return 1;
 
     /* terminate this stage cleanly                                   */
     rc = xfl_stagequit(pc);
@@ -79,5 +77,13 @@ int main(int argc,char*argv[])
 
     return 0;
   }
+
+/*
+//MD
+//MD* literal
+//MD
+//MDUse the `literal` stage to insert a line of literal text into a stream.
+//MD
+ */
 
 

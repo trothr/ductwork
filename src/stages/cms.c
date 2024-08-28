@@ -3,6 +3,12 @@
  *              POSIX Pipelines CMS stage
  *        Date: 2024-06-05 (Wednesday) after email from Sir Rob
  *              There is no CMS environment available in this context.
+ *              This stage exists primarily so that pipelines taken
+ *              from VM/CMS (where they would use CMS Pipelines)
+ *              will at least parse correctly.
+ *
+ *              If an interface to VM/CMS becomes available it would be
+ *              utilized here and then this stage would not be a no-op.
  */
 
 #include <stdio.h>

@@ -336,6 +336,8 @@ if (argc < 2) argv[1] = NULL;
         if (strcmp(verb,">>") == 0) verb = "filea";
         /* magical file syntax fixup */
 
+        /* abbreviation logic should go near here */
+
         snprintf(tmpbuf,sizeof(tmpbuf),"%s/%s",q,verb);   /* looking for arg0 */
         rc = stat(tmpbuf,&sb);
         if (rc == 0) break;       /* found it! break out with success */
