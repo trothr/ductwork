@@ -7,6 +7,12 @@ as CMS/TSO Pipelines provides on IBM mainframe systems CMS and TSO.
 
 An alternate name for the project is "[plenum](plenum.md)".
 
+NOTE: <br/>
+The home for this project has moved to https://github.com/trothtech/xfl/
+
+The source archive and related artifacts, such as the PGP signature,
+can be downloaded from http://www.casita.net/pub/xfl/
+
 ## Goals
 
 Goals of the Ductwork project:
