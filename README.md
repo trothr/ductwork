@@ -13,6 +13,8 @@ The home for this project has moved to https://github.com/trothtech/xfl/
 The source archive and related artifacts, such as the PGP signature,
 can be downloaded from http://www.casita.net/pub/xfl/
 
+The official Git repository is https://github.com/trothtech/xfl.
+
 ## Goals
 
 Goals of the Ductwork project:

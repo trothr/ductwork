@@ -36,7 +36,7 @@ MKAR            =       $(AR) r
 
 STAGES          =       buffer cms command cons console count cp \
                         elastic fanin filea filer filew hole literal \
-                        locate nlocate reverse strliteral var
+                        locate nlocate reverse strliteral var take drop
 
 DELIVERABLES    =       pipe$(EXE) libxfl$(LIB) libxfl$(DLL) xfllib$(OBJ) xmitmsgx$(OBJ)
 
@@ -210,6 +210,11 @@ configure:
 		@echo "$(MAKE): you need $@"
 		wget $(PROJECTURL)/$@
 
+#
+# build an RPM of the package
+xfl.rpm:
+	./rpmbuild.sh $(APPLID) $(VERSION)
+
 # reset things for a fresh build from source
 clean:
 		rm -f *.o *.a *.so *.dylib *.rpm *.class stages.tag \
@@ -221,6 +226,7 @@ distclean:      clean
 		@rm -f configure.h configure.sh
                 -$(MAKE) -C xmitmsgx distclean
 		-$(MAKE) -C stages distclean
+		@rm -f makefile
 
 veryclean:      distclean
 
