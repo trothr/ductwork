@@ -29,35 +29,38 @@ This is the source directory for XFL, POSIX Pipelines
 
     stages/                     see stages/manifest
     stages/manifest             list of files providing stages
-    stages/configure            configurator script
+    stages/configure            configurator script for the stages
     stages/configure.h          generated
     stages/configure.sh         generated
-    stages/makefile.in          skeleton makefile
+    stages/makefile.in          skeleton makefile for the stages
     stages/makefile             generated
-    stages/console.c            CONSOLE stage reads stdin and/or writes stdout
-    stages/cons.c               alias for CONSOLE stage
-    stages/literal.c            LITERAL stage inserts literal strings into the stream
-    stages/strliteral.c
-    stages/locate.c
-    stages/nlocate.c
+
     stages/buffer.c             BUFFER stage holds all records until end-of-input
-    stages/reverse.c
-    stages/count.c
-    stages/fanin.c
-    stages/filer.c
-    stages/filew.c
-    stages/filea.c
-    stages/var.c
-    stages/command.c
-    stages/cp.c
-    stages/cms.c
-    stages/hole.c
+    stages/console.c            read from stdin if first, write to stdout otherwise
+    stages/cons.c               alias for CONSOLE stage
     stages/elastic.c
+    stages/reverse.c
+    stages/literal.c            prepend a record to the stream with the literal string supplied
+    stages/strliteral.c         prepend a record to the stream with the literal string supplied
+    stages/fanin.c              gather inputs one at a time
+    stages/command.c            issue commands to the local operating system
+    stages/cp.c                 issue a CP or VMCP command (requires z/VM)
+    stages/cms.c                N/A apart from VM/CMS
+    stages/locate.c             find a needle in a haystack
+    stages/nlocate.c            exclude a needle from a haystack
+    stages/var.c                read a variable from the environment
+    stages/hole.c
+    stages/count.c
+    stages/take.c               take (first or last) n records
+    stages/drop.c               drop (first or last) n records
+    stages/filer.c              read a file
+    stages/filew.c              write a file
+    stages/filea.c              append to a file
 
 # Rexx support
 
     xflrexx.c                   Rexx interface shim
-    rxstage.rx                  sample stage written in Rexx
+    rxstage.rx                  a sample stage written in Rexx
     rxsample.sh                 Rexx demonstration script
 
 # COBOL support
@@ -68,47 +71,5 @@ This is the source directory for XFL, POSIX Pipelines
 # Java support
 
     xfljava.c
-
-
-makefile.in
-cobstage.cob
-pipe.c
-xfl.spec.in
-testfile.txt
-xflrexx.c
-xmitmsgx/makefile.in
-xmitmsgx/xmitmsgx.c
-xmitmsgx/xmitmsgx.h
-xmitmsgx/configure
-xfljava.c
-cobsample.sh
-xfl.h
-rxsample.sh
-stages/filer.c
-stages/makefile.in
-stages/hole.c
-stages/command.c
-stages/count.c
-stages/cp.c
-stages/console.c
-stages/strliteral.c
-stages/reverse.c
-stages/nlocate.c
-stages/locate.c
-stages/filea.c
-stages/filew.c
-stages/buffer.c
-stages/var.c
-stages/cons.c
-stages/manifest
-stages/fanin.c
-stages/literal.c
-stages/cms.c
-stages/configure
-xfl.msgs
-manifest
-rxstage.rx
-xfllib.c
-configure
 
 
