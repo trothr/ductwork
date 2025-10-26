@@ -106,8 +106,7 @@ case "$US" in
         UM="s390x" # guessing! since both "s390x" and "s390" are viable
         CC="xlc"
         CFLAGS="-DOECS -D_OE_SOCKETS -D__UU"
-#       LDFLAGS="-O -qxplink"
-        LDFLAGS=""
+        LDFLAGS="-O -qxplink"
         SHFLAGS="$LDFLAGS -qdll"
         if [ -d /usr/lib/nls/msg ] ; then LOCDIR=/usr/lib/nls/msg ; fi
         ;;
@@ -119,9 +118,6 @@ case "$US" in
         ;;
 esac
 
-#
-# determine a locale
-if [ -z "$LOCALE" -a ! -z "$LANG" ] ; then LOCALE="$LANG" ; fi
 #LOCALE examples:
 #/usr/share/locale/
 #/usr/lib/nls/msg/
@@ -159,7 +155,6 @@ cat makefile.in \
   | sed "s#%SHFLAGS%#$SHFLAGS#g" \
   | sed "s#%LIBS%#$LIBS#g" \
   | sed "s#%LOCDIR%#$LOCDIR#g" \
-  | sed "s#%LOCALE%#$LOCALE#g" \
   | sed 's#^        #\t#' \
   >> makefile
 RC=$? ; if [ $RC -ne 0 ] ; then exit $RC ; fi
@@ -173,7 +168,6 @@ echo "SYSTEM=#$SYSTEM#"   >> configure.tmp
 echo "LDFLAGS=#$LDFLAGS#" >> configure.tmp
 echo "SHFLAGS=#$SHFLAGS#" >> configure.tmp
 echo "LOCDIR=#$LOCDIR#"   >> configure.tmp                    # xmitmsgx
-echo "LOCALE=#$LOCALE#"   >> configure.tmp                    # xmitmsgx
 sed 's/#/"/g' < configure.tmp | awk '{print "#define" , $0}' | sed 's/=/ /' > configure.h
 sed 's/#/"/g' < configure.tmp > configure.sh # chmod a+x configure.sh
 rm configure.tmp
